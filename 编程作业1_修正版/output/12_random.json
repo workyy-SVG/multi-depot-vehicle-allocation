@@ -1,0 +1,189 @@
+{
+  "input": "12_random.in",
+  "selected": "local_search",
+  "seed": "balanced",
+  "allocation": [
+    [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    [
+      9,
+      8,
+      7,
+      6,
+      5
+    ]
+  ],
+  "candidates": {
+    "balanced": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      [
+        9,
+        8,
+        7,
+        6,
+        5
+      ]
+    ],
+    "mean": [
+      [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      [
+        0,
+        9,
+        8,
+        7,
+        6
+      ]
+    ],
+    "risk": [
+      [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      [
+        0,
+        9,
+        8,
+        7,
+        6
+      ]
+    ],
+    "trend": [
+      [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      [
+        0,
+        9,
+        8,
+        7,
+        6
+      ]
+    ],
+    "local_search": [
+      [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      [
+        9,
+        8,
+        7,
+        6,
+        5
+      ]
+    ]
+  },
+  "rolling_validation": [
+    {
+      "train_end_exclusive": 60,
+      "search_periods": [
+        0,
+        19,
+        39,
+        59
+      ],
+      "test_periods": [
+        60,
+        69,
+        79
+      ],
+      "costs": {
+        "balanced": 16703.358623050903,
+        "mean": 16664.761428109126,
+        "risk": 16664.761428109126,
+        "trend": 16664.761428109126,
+        "local_search": 16664.761428109126
+      }
+    },
+    {
+      "train_end_exclusive": 80,
+      "search_periods": [
+        0,
+        26,
+        52,
+        79
+      ],
+      "test_periods": [
+        80,
+        89,
+        99
+      ],
+      "costs": {
+        "balanced": 16814.37399828362,
+        "mean": 16747.051489995592,
+        "risk": 16747.051489995592,
+        "trend": 16747.051489995592,
+        "local_search": 16747.051489995592
+      }
+    }
+  ],
+  "search_periods": [
+    0,
+    33,
+    66,
+    99
+  ],
+  "search_costs": {
+    "balanced": 17726.59626712658,
+    "mean": 17795.215501377585,
+    "risk": 17795.215501377585,
+    "trend": 17795.215501377585,
+    "local_search": 17726.59626712658
+  },
+  "declared_customer_counts": [
+    400,
+    400
+  ],
+  "ignored_trailing_records": 200,
+  "capacities": [
+    1500,
+    1500
+  ],
+  "penalty_multiplier": 4,
+  "optimizer": {
+    "status": "DISABLED"
+  },
+  "trend_detected": [
+    false,
+    false
+  ],
+  "settings": {
+    "input_dir": "C:\\Users\\admin\\Documents\\Codex\\2026-11-13\\new-chat\\work\\fixed\\input_data",
+    "output_dir": "work/delivery-run",
+    "file": null,
+    "cp_sat": false,
+    "train_periods": 4,
+    "rounds": 2,
+    "seconds": 35,
+    "scenarios": 5,
+    "offsets": 3,
+    "eval_periods": 3
+  }
+}

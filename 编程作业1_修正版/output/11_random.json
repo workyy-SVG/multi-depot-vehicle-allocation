@@ -1,0 +1,183 @@
+{
+  "input": "11_random.in",
+  "selected": "local_search",
+  "seed": "mean",
+  "allocation": [
+    [
+      3,
+      5,
+      7
+    ],
+    [
+      0,
+      1,
+      2,
+      4,
+      6,
+      8
+    ]
+  ],
+  "candidates": {
+    "balanced": [
+      [
+        0,
+        2,
+        4,
+        6,
+        8
+      ],
+      [
+        1,
+        3,
+        5,
+        7
+      ]
+    ],
+    "mean": [
+      [
+        3,
+        5,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        4,
+        6,
+        8
+      ]
+    ],
+    "risk": [
+      [
+        3,
+        5,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        4,
+        6,
+        8
+      ]
+    ],
+    "trend": [
+      [
+        3,
+        5,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        4,
+        6,
+        8
+      ]
+    ],
+    "local_search": [
+      [
+        3,
+        5,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        4,
+        6,
+        8
+      ]
+    ]
+  },
+  "rolling_validation": [
+    {
+      "train_end_exclusive": 30,
+      "search_periods": [
+        0,
+        9,
+        19,
+        29
+      ],
+      "test_periods": [
+        30,
+        34,
+        39
+      ],
+      "costs": {
+        "balanced": 7114.662274264166,
+        "mean": 2562.2441175982117,
+        "risk": 2562.2441175982117,
+        "trend": 2562.2441175982117,
+        "local_search": 2562.2441175982117
+      }
+    },
+    {
+      "train_end_exclusive": 40,
+      "search_periods": [
+        0,
+        13,
+        26,
+        39
+      ],
+      "test_periods": [
+        40,
+        44,
+        49
+      ],
+      "costs": {
+        "balanced": 8128.707413088523,
+        "mean": 2698.5053868876003,
+        "risk": 2698.5053868876003,
+        "trend": 2698.5053868876003,
+        "local_search": 2698.5053868876003
+      }
+    }
+  ],
+  "search_periods": [
+    0,
+    16,
+    32,
+    49
+  ],
+  "search_costs": {
+    "balanced": 6857.797726185886,
+    "mean": 2614.2689857604755,
+    "risk": 2614.2689857604755,
+    "trend": 2614.2689857604755,
+    "local_search": 2614.2689857604755
+  },
+  "declared_customer_counts": [
+    160,
+    200
+  ],
+  "ignored_trailing_records": 0,
+  "capacities": [
+    300,
+    600
+  ],
+  "penalty_multiplier": 4,
+  "optimizer": {
+    "status": "DISABLED"
+  },
+  "trend_detected": [
+    true,
+    false
+  ],
+  "settings": {
+    "input_dir": "C:\\Users\\admin\\Documents\\Codex\\2026-11-13\\new-chat\\work\\fixed\\input_data",
+    "output_dir": "work/delivery-run",
+    "file": null,
+    "cp_sat": false,
+    "train_periods": 4,
+    "rounds": 2,
+    "seconds": 35,
+    "scenarios": 5,
+    "offsets": 3,
+    "eval_periods": 3
+  }
+}
