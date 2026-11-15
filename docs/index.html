@@ -20,6 +20,6 @@ main{width:min(1160px,92%);margin:24px auto 40px}.controls,.summary{display:flex
 <section><h2>仓库与客户位置</h2><canvas id="map" role="img" aria-label="平面坐标图，方块表示仓库，圆点表示客户。"></canvas><p class="note">方块是仓库，圆点是客户。点击右侧仓库编号可突出显示其负责的客户。</p></section>
 <section><h2>最终车辆分配</h2><table><thead><tr><th>仓库</th><th>车辆数</th><th>总载重</th><th>车辆编号（载重）</th></tr></thead><tbody id="fleet"></tbody></table><p class="note" id="data-note"></p></section>
 </div>
-<section class="cost"><h2>滚动验证成本</h2><label for="window">验证窗口</label> <select id="window"></select><p class="note" id="periods"></p><div id="costs" aria-live="polite"></div><p id="comparison"></p><small>成本为行驶距离与未服务罚分之和，越低越好。每个窗口使用该窗口之前的历史生成方案，图表展示本地验证估算。上方车辆表展示最终提交方案。</small></section>
+<section class="cost"><h2>滚动验证成本</h2><label for="window">验证窗口</label> <select id="window"></select><p class="note" id="periods"></p><div id="costs" aria-live="polite"></div><p id="comparison"></p><p><a id="ai-link" href="https://multi-depot-vehicle-allocation-q5pvak8radnex77ftefspu.streamlit.app/">打开 AI 辅助分析 →</a></p><small>成本为行驶距离与未服务罚分之和，越低越好。每个窗口使用该窗口之前的历史生成方案，图表展示本地验证估算。上方车辆表展示最终提交方案。</small></section>
 </main>
 </body></html>
