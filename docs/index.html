@@ -144,7 +144,20 @@ figcaption strong{display:block;margin-bottom:3px}
 .warehouse-analysis h3{margin:0 0 5px;font-size:16px}
 .warehouse-analysis iframe{width:100%;height:220px;border:1px solid var(--line);border-radius:7px;margin-top:8px;background:white}
 .warehouse-analysis .table-wrap{margin-bottom:8px}
+.demand-3d{grid-area:demand}
+#project[data-view=overview] .grid{grid-template-areas:"map map" "demand demand" "overview overview"}
+.demand-3d summary{cursor:pointer;font-size:19px;font-weight:700;color:#163f35}
+.demand-3d .controls-3d{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0;align-items:end}
+.demand-3d .controls-3d label{flex:1;min-width:140px;font-size:13px;font-weight:650}
+.demand-3d input[type=range]{display:block;padding:0;margin-top:6px;accent-color:#087b66}
+.demand-3d .controls-3d button{padding:6px 10px;border:1px solid #b5d1c4;background:#e3f0eb;border-radius:6px}
+.demand-3d .chart-3d{display:grid;grid-template-columns:minmax(0,2fr) minmax(170px,1fr);gap:12px;align-items:center}
+#demand-canvas{height:clamp(330px,55vh,560px);background:#f7fbf9}
+.demand-3d tbody th{font-weight:600}
+@media(max-width:1030px){#project[data-view=overview] .grid{grid-template-areas:"map" "demand" "overview"}}
+@media(max-width:700px){.demand-3d .chart-3d{grid-template-columns:1fr}}
 </style>
+<script defer src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
 </head>
 <body>
 <aside class="preview"><strong>答辩导航</strong><nav class="tabs" aria-label="答辩导航"><button type="button" data-view="overview" aria-pressed="true" aria-label="项目概览" title="项目概览"><span class="layout-letter" aria-hidden="true">概</span><span class="layout-name">项目概览</span></button><button type="button" data-view="fleet" aria-pressed="false" aria-label="车辆分配" title="车辆分配"><span class="layout-letter" aria-hidden="true">车</span><span class="layout-name">车辆分配</span></button><button type="button" data-view="cost" aria-pressed="false" aria-label="策略对比" title="策略对比"><span class="layout-letter" aria-hidden="true">比</span><span class="layout-name">策略对比</span></button><button type="button" data-view="ai" aria-pressed="false" aria-label="AI 辅助分析" title="AI 辅助分析"><span class="layout-letter" aria-hidden="true">AI</span><span class="layout-name">AI 辅助分析</span></button></nav></aside>
@@ -174,6 +187,24 @@ figcaption strong{display:block;margin-bottom:3px}
 </div>
 <figcaption><strong>位置与分配</strong><span id="map-explanation"></span></figcaption>
 </figure>
+</section>
+<section class="card demand-3d" data-section="overview">
+<details open id="demand-demo">
+<summary>仓库需求随时间变化 · 3D</summary>
+<p class="muted">底面的 X、Y 是仓库坐标，柱高是所选周期的仓库总需求。拖动画布旋转和俯仰，滚轮缩放。</p>
+<div class="controls-3d">
+<label for="demand-period">历史周期 <output id="period-display"></output><input id="demand-period" type="range" min="1" value="1"></label>
+
+<button type="button" id="play-demand" aria-pressed="false">播放</button>
+</div>
+<figure>
+<div class="chart-3d">
+<div><div id="demand-canvas" aria-label="可旋转的仓库需求三维柱状图"></div><p id="demand-status" class="muted" role="status"></p></div>
+<div class="table-wrap"><table><thead><tr><th scope="col">仓库</th><th scope="col">本期总需求</th></tr></thead><tbody id="demand-values"></tbody></table></div>
+</div>
+<figcaption><strong>读图说明</strong><span id="demand-explanation"></span></figcaption>
+</figure>
+</details>
 </section>
 <section class="card overview" data-section="overview">
 <h2>项目要解决什么</h2>
@@ -465,6 +496,7 @@ function renderAnswer() {
 function renderInstance() {
   const d = record();
   focus = 0;
+  resetDemand();
   moveMap(null);
   windowPicker.replaceChildren(...d.windows.map((_,i)=>new Option('窗口 '+(i+1),i)));
   $('stats').innerHTML = [[d.depots.length,'仓库'],[d.groups.reduce((n,g)=>n+g.length,0),'客户'],[d.caps.length,'车辆'],[d.periods,'历史周期']].map(([count,label])=>'<span class="stat"><b>'+integer.format(count)+'</b>'+label+'</span>').join('');
@@ -496,6 +528,7 @@ function showView(view) {
   document.querySelectorAll('[data-section]').forEach(section=>section.hidden=section.dataset.section!==view);
   $('window-field').hidden = view!=='cost' && view!=='ai';
   drawMap();
+  if (view !== 'overview') stopDemand();
 }
 for (const button of navButtons) {
   button.addEventListener('click',()=>showView(button.dataset.view));
@@ -619,6 +652,132 @@ $('heat-body').addEventListener('click', event => {
 const mapObserver = new ResizeObserver(drawMap);
 mapObserver.observe(canvas);
 mapObserver.observe(localCanvas);
+const historicalDemand = {"05_increasing_demand":[[124,119,144,120,102,113,130,109,111,95,116,126,108,118,133,136,141,123,166,128,139,90,137,206,146,155,143,160,150,168,144,145,166,177,194,150,197,171,117,178,213,269,227,197,216,233,210,172,256,195],[504,475,486,488,455,465,458,415,484,493,462,402,507,469,524,447,486,481,490,463,490,473,502,489,467,509,463,505,494,476,489,460,468,525,516,494,476,482,462,440,496,484,494,489,501,495,454,504,490,451]],"06_random":[[187,103,219,169,220,279,137,181,220,201,107,138,211,300,196,183,236,163,24,254,266,200,230,223,157,304,218,196,176,140,178,156,265,95,189,168,131,240,130,213,133,202,110,320,246,186,177,130,157,292,221,186,219,144,216,152,211,326,157,298,127,125,172,141,216,240,329,207,197,247,164,188,293,212,218,155,128,224,201,113,221,299,192,142,141,164,56,188,195,107,280,252,201,149,199,145,257,220,263,117],[271,274,276,299,260,286,266,318,317,280,302,254,301,253,279,266,265,299,238,269,290,240,252,268,272,266,288,273,306,265,322,274,279,282,279,291,251,278,278,291,276,266,337,255,288,257,283,288,269,268,277,302,288,276,221,285,265,247,283,291,278,297,283,247,328,264,266,274,258,280,260,264,289,235,282,281,276,317,289,306,267,265,282,290,287,262,268,276,291,285,253,319,288,255,269,266,288,260,280,327]],"07_random":[[146,160,144,130,148,154,138,147,142,133,143,130,128,142,145,144,144,142,147,149,150,158,142,174,143,138,144,135,145,169,145,152,153,142,143,133,124,154,145,154,147,151,144,174,129,150,161,150,157,146,135,151,139,154,141,149,132,143,147,153,141,131,150,148,135,141,137,147,128,138,151,133,143,161,142,150,126,146,157,148,134,132,135,146,142,141,147,137,151,151,141,150,144,138,134,156,139,140,144,138],[38,58,94,26,71,15,70,39,37,48,85,44,57,32,30,37,28,33,42,62,30,56,24,39,30,37,42,23,50,47,24,60,57,44,32,32,38,41,32,100,67,22,66,86,70,17,46,24,52,46,63,14,32,29,110,43,61,78,36,22,48,35,61,29,28,58,20,18,36,24,48,47,14,63,35,30,42,29,48,56,43,23,68,54,95,52,51,24,43,14,43,75,53,66,47,35,28,35,22,25],[399,357,299,309,332,379,333,306,282,306,312,278,296,308,294,341,293,248,399,362,312,268,305,313,216,358,375,368,365,273,318,306,413,348,309,248,265,269,298,364,291,345,307,377,352,302,422,270,309,342,328,320,335,271,423,296,280,280,251,303,310,249,377,275,324,331,242,279,380,267,259,307,340,372,342,290,319,314,397,260,307,301,336,337,361,340,319,384,344,342,304,257,322,326,238,358,296,408,305,312],[247,188,243,184,260,193,264,245,205,255,148,214,192,224,233,194,319,244,336,333,127,258,243,358,250,212,226,360,206,224,221,162,294,280,229,269,141,233,216,300,226,192,215,188,276,103,204,257,284,228,223,178,217,242,282,153,335,263,155,267,144,210,243,415,133,216,160,259,241,192,193,212,245,172,167,372,171,234,292,250,238,264,166,165,143,299,240,224,197,203,220,239,201,284,203,224,242,168,309,139],[354,619,510,457,567,512,372,527,627,493,547,582,585,426,405,488,444,496,461,447,424,600,561,432,331,400,415,600,369,387,500,378,485,428,493,463,609,568,338,433,481,517,427,402,422,395,492,541,383,561,481,438,545,483,608,474,482,418,590,385,449,439,478,545,455,347,458,430,590,412,366,458,468,524,445,473,376,455,512,388,439,481,634,459,405,444,435,486,525,435,516,458,401,406,413,387,574,508,426,544]],"08_random":[[1235,1227,1191,1097,1195,1191,1109,1262,1208,1086,1187,1163,1349,1461,1291,1365,1427,1345,1403,1462,1429,1408,1421,1531,1454,1593,1516,1640,1620,1571,1673,1637,1595,1744,1635,1668,1751,1667,1661,1642],[2370,2372,2397,2395,2431,2342,2453,2378,2356,2523,2352,2321,2380,2313,2503,2457,2399,2368,2345,2456,2405,2411,2476,2379,2287,2448,2359,2406,2452,2418,2469,2424,2418,2320,2479,2477,2356,2382,2397,2428]],"09_random":[[957,946,913,984,861,958,897,837,875,956,944,959,926,931,872,946,953,842,915,941,895,910,938,942,939,855,933,854,840,924,909,907,918,928,881,903,933,898,937,913,930,945,951,885,908,884,884,949,1005,879,934,894,887,905,890,955,909,894,810,874,898,900,925,861,912,928,945,890,907,937,932,926,941,998,915,865,915,918,952,910,925,907,1000,862,902,912,919,920,909,861,870,956,897,958,966,885,866,863,945,928],[757,757,837,765,801,786,770,789,840,815,767,817,747,751,780,857,771,805,784,752,751,718,792,810,782,762,793,791,745,764,750,777,815,842,746,819,803,808,791,786,734,775,758,820,806,787,809,800,773,728,843,773,782,746,716,739,738,742,790,805,754,751,787,798,837,803,784,797,828,781,770,753,822,798,774,736,771,806,800,780,741,765,725,666,778,774,787,736,790,794,756,729,822,811,680,829,754,819,786,777]],"10_random":[[123,117,116,112,130,130,119,135,119,112,136,116,105,111,130,133,126,140,104,92,119,133,109,108,136,117,130,122,114,110,128,106,129,135,96,133,121,104,106,101,98,113,117,117,112,143,115,108,123,101,115,125,103,138,108,112,135,114,123,123,139,132,113,120,125,108,103,124,132,132,109,108,130,119,122,156,121,119,112,136,117,128,121,114,117,117,103,151,114,107,128,130,136,130,147,110,100,96,117,115],[386,325,331,326,296,390,417,328,379,295,351,346,320,279,329,329,307,353,398,335,362,302,333,380,280,276,371,241,283,307,369,289,353,377,370,319,311,322,333,337,319,353,391,366,310,291,353,310,399,388,309,297,367,309,329,303,318,297,320,339,261,309,363,419,347,362,266,335,388,336,359,412,339,295,355,409,353,333,353,378,327,333,308,327,391,355,470,369,299,356,336,340,351,301,415,274,318,325,395,308],[352,321,345,393,250,299,343,420,367,304,317,366,387,378,386,349,318,416,362,342,353,333,333,358,297,265,337,374,331,349,337,348,365,381,426,373,315,329,349,317,330,313,324,472,286,385,398,320,357,294,357,380,358,319,411,318,322,277,438,360,286,369,383,298,300,318,315,384,345,370,417,400,365,411,309,346,264,423,364,323,309,349,434,326,351,325,407,354,350,300,304,375,277,261,308,396,294,360,315,361],[444,679,502,575,557,522,468,721,613,549,626,488,564,471,545,646,732,538,539,691,546,402,592,625,513,548,483,605,559,549,587,497,442,551,587,551,671,447,459,644,566,612,652,512,592,490,622,529,583,521,630,634,577,592,537,498,538,670,550,534,458,621,615,502,511,562,582,585,588,572,420,497,497,519,606,480,580,536,663,485,566,389,481,449,493,543,572,516,520,599,556,541,621,584,641,522,527,408,658,622],[702,674,663,563,744,753,911,767,606,934,866,836,614,509,773,653,783,745,712,679,764,612,671,717,811,674,637,731,607,627,725,764,689,831,782,655,719,673,634,775,710,769,583,957,826,716,896,757,819,653,673,622,813,648,696,782,820,501,811,621,751,769,725,745,680,876,639,635,636,780,764,719,578,678,609,620,547,884,762,628,659,664,641,950,614,914,664,791,706,690,665,768,682,630,670,760,692,663,701,581]],"11_random":[[179,180,173,190,233,183,207,203,206,169,193,221,200,227,224,215,250,223,241,272,205,233,253,278,214,248,266,308,265,263,203,270,272,291,276,282,268,311,265,237,283,288,279,254,245,304,267,330,359,295],[441,446,449,476,481,438,417,491,466,499,482,486,446,474,487,480,508,485,448,432,447,523,515,506,479,451,448,479,508,485,481,485,474,497,491,444,485,490,469,469,505,495,487,455,501,471,494,538,477,464]],"12_random":[[582,627,587,560,637,662,594,606,561,564,620,651,682,631,553,576,570,596,541,576,603,607,548,601,569,606,603,562,579,624,611,619,638,618,592,543,587,662,608,635,589,617,567,611,605,582,570,589,588,577,615,606,584,599,617,550,569,581,612,627,607,679,574,598,569,635,654,545,617,562,575,670,621,625,609,566,597,606,630,594,643,590,602,545,572,646,553,622,647,575,616,628,585,560,627,630,643,615,618,634],[1006,986,1117,1037,992,953,1086,1107,1037,1053,995,1021,1124,1010,969,1113,969,1038,1024,978,1087,1084,1033,1073,1073,956,979,1090,1027,1101,1083,1067,1030,1099,1102,1033,1035,1021,1093,993,1112,1092,1112,1148,1040,1078,1008,1094,1075,1019,1027,1005,1094,1087,1121,1158,1126,1099,1074,1095,1093,1222,1068,1034,1115,1088,1101,1002,1003,1014,987,1002,1056,1005,1005,984,1014,1146,972,1078,1009,960,1043,1132,1053,1085,1052,1129,1060,1151,970,1045,1030,1066,1201,960,1034,1003,1087,1125]],"13_random":[[459,484,490,518,493,435,471,506,451,470,471,510,479,524,447,493,504,455,506,510,455,429,450,501,517,466,510,488,499,520,512,491,495,499,478,498,529,490,510,475,494,441,491,471,503,489,481,471,491,501,470,498,526,466,489,513,505,459,493,453,527,473,468,485,501,489,502,491,519,470,466,430,482,537,476,466,470,484,496,475,492,462,526,437,461,459,507,485,441,513,451,497,467,465,489,498,479,472,474,464],[2103,1943,1791,2091,1915,1836,1796,2273,1802,2144,1890,1979,1925,2048,1784,2067,1767,2043,1629,1821,1749,1914,1893,1887,2070,1917,1811,1923,1910,1711,1827,1854,1947,1695,1773,1643,2054,1973,1985,2000,2134,1861,1994,1859,1845,1976,1840,1957,1955,1809,1836,2172,2088,1938,1903,1851,1841,1954,1883,1826,2077,2066,1835,2034,1894,2022,2022,1863,1792,1862,1844,1750,1901,1663,2048,1762,1813,1899,1911,1939,1748,1896,2079,2046,1946,1949,1791,1868,1867,2028,1769,2047,1908,2016,1765,1936,1927,1969,1857,1689],[2096,2262,2220,2237,2024,2385,2193,1981,2601,2483,2221,2165,1859,2454,2286,1894,2253,2171,2252,2414,2173,2298,2122,2007,2485,2181,2328,2235,2343,2231,2429,2012,2610,1989,2546,2320,2276,2228,1999,2207,2337,2303,2542,2433,2123,2326,2431,1939,2109,2356,2310,2091,2163,2263,2435,2195,2172,2120,2212,2200,2477,2453,2148,2178,2273,2308,1923,2133,2118,1893,2042,2307,2330,2131,2207,2355,2278,2039,2188,2022,2196,2448,2279,2321,2289,2219,2125,2297,2259,2178,2240,2196,2051,2125,2544,2440,2262,2521,2308,2110],[1343,1605,1425,1296,1527,1297,1688,1583,1246,1648,1306,1381,1631,1326,1700,1469,1311,1320,1193,1410,1546,1460,1286,1573,1605,1572,1248,1312,1252,1623,1506,1411,1312,1509,1426,1476,1356,1306,1207,1377,1541,1438,1298,1515,1451,1317,1431,1153,1588,1363,1217,1513,1546,1746,1605,1365,1483,1245,1537,1514,1502,1631,1444,1320,1472,1525,1409,1487,1564,1422,1244,1670,1521,1054,1513,1603,1407,1532,1182,1149,1366,1489,1258,1496,1478,1634,1495,1372,1442,1337,1306,1619,1604,1369,1223,1538,1286,1380,1521,1323],[3917,4294,4021,4358,4111,3947,4182,3813,4016,4275,4015,4191,4219,3863,4070,4230,4022,4114,3921,4227,4240,3899,3843,4022,3999,4002,3984,4354,4267,4047,4083,3973,3836,3995,4248,3848,4130,3910,3906,3929,3700,4315,4278,3814,3938,3887,4187,3815,4099,3808,4136,4145,4246,4133,3921,4102,3857,3918,4103,4042,3934,3826,4173,3922,4011,4247,4130,4232,4090,3840,4155,4239,4113,3697,4007,4141,4204,4108,4146,4327,4244,4220,3996,3721,4000,4303,4179,3805,3853,4040,3892,4299,4001,4030,3954,4173,3954,4127,3935,3997]]};
+const demandCanvas = $('demand-canvas');
+const demandPeriod = $('demand-period');
+
+let demandTimer = null;
+
+function demandLimit(groups) {
+  const max = Math.max(1,...groups.flat());
+  const step = 10 ** Math.floor(Math.log10(max)) / 2;
+  return Math.ceil(max / step) * step;
+}
+
+const cubeFaces = [[0,1,2],[0,2,3],[4,6,5],[4,7,6],[0,4,5],[0,5,1],
+                   [1,5,6],[1,6,2],[2,6,7],[2,7,3],[3,7,4],[3,4,0]];
+
+function drawDemand(values, limit) {
+  if (demandCanvas.clientWidth < 60 || demandCanvas.clientHeight < 60) return;
+  const status = $('demand-status');
+  if (!window.Plotly) {
+    status.textContent = '3D 图形组件未能加载，可在旁边查看需求数值。';
+    return;
+  }
+
+  const positions = record().depots;
+  const ranges = [0,1].map(axis=>{
+    const coordinates = positions.map(point=>point[axis]);
+    return [Math.min(...coordinates), Math.max(...coordinates)];
+  });
+  const span = Math.max(1,...ranges.map(([low,high])=>high-low));
+  const distances = positions.flatMap(([x,y],i)=>positions.slice(i+1).map(([x2,y2])=>Math.hypot(x-x2,y-y2))).filter(distance=>distance>0);
+  const radius = Math.min(span*.028,...distances.map(distance=>distance*.2));
+  const bars = positions.map(([x,y],i)=>({
+    type:'mesh3d', name:'仓库 '+i, color:colors()[i%colors().length], flatshading:true,
+    x:[x-radius,x+radius,x+radius,x-radius,x-radius,x+radius,x+radius,x-radius],
+    y:[y-radius,y-radius,y+radius,y+radius,y-radius,y-radius,y+radius,y+radius],
+    z:[0,0,0,0,values[i],values[i],values[i],values[i]],
+    i:cubeFaces.map(face=>face[0]),j:cubeFaces.map(face=>face[2]),k:cubeFaces.map(face=>face[1]),
+    hovertemplate:'仓库 '+i+'<br>X '+x+' · Y '+y+'<br>总需求 '+integer.format(values[i])+'<extra></extra>',
+    lighting:{ambient:.72,diffuse:.82,roughness:.78,specular:.12},
+    showlegend:false,
+  }));
+  const labels = {
+    type:'scatter3d', mode:'markers+text',
+    x:positions.map(point=>point[0]), y:positions.map(point=>point[1]), z:values,
+    text:positions.map((_,i)=>'仓库 '+i),textposition:'top center',
+    textfont:{color:'#183d34',size:13},
+    marker:{size:3,color:positions.map((_,i)=>colors()[i%colors().length])},
+    hovertemplate:'%{text}<br>总需求 %{z}<extra></extra>',showlegend:false,
+  };
+  const pad = span*.09;
+  const setAxis = (name,range) => ({
+    title:{text:name}, range, backgroundcolor:'#edf6f1',showbackground:true,gridcolor:'#c4dacf',
+  });
+  const xRange = [ranges[0][0]-pad,ranges[0][1]+pad];
+  const yRange = [ranges[1][0]-pad,ranges[1][1]+pad];
+  const horizontalSpan = Math.max(xRange[1]-xRange[0],yRange[1]-yRange[0]);
+  const layout = {
+    margin:{t:8,b:8,l:8,r:8},paper_bgcolor:'#f7fbf9', uirevision:dataset.value,
+    scene:{
+      dragmode:'orbit',
+      aspectmode:'manual',
+      aspectratio:{x:(xRange[1]-xRange[0])/horizontalSpan,y:(yRange[1]-yRange[0])/horizontalSpan,z:.8},
+      xaxis:setAxis('仓库坐标 X',xRange),
+      yaxis:setAxis('仓库坐标 Y',yRange),
+      zaxis:setAxis('总需求',[0,limit*1.08]),
+    },
+  };
+  Promise.resolve(window.Plotly.react(demandCanvas,[...bars,labels],layout,{
+    responsive:true,scrollZoom:true,displaylogo:false,modeBarButtonsToRemove:['toImage'],
+  })).then(()=>{
+    status.textContent = demandCanvas.querySelector('canvas') ? '' : '浏览器未能渲染 3D 图，可在旁边查看需求数值。';
+  }).catch(()=>{
+    status.textContent = '浏览器未能渲染 3D 图，可在旁边查看需求数值。';
+  });
+}
+
+function renderDemand() {
+  const groups = historicalDemand[dataset.value];
+  const period = Number(demandPeriod.value);
+  const limit = demandLimit(groups);
+  const values = groups.map(group=>group[period-1]);
+  $('period-display').textContent = '第 '+period+' / '+groups[0].length+' 期';
+  $('demand-values').innerHTML = values.map((value,index)=>'<tr><th scope="row"><span class="dot" style="background:'+colors()[index%colors().length]+'"></span>仓库 '+index+'</th><td>'+integer.format(value)+'</td></tr>').join('');
+  const max = Math.max(...values);
+  const leaders = values.flatMap((value,index)=>value===max?['仓库 '+index]:[]);
+  const trend = period>1
+    ? ' 全部仓库的合计需求从上一期的 '+integer.format(groups.reduce((sum,group)=>sum+group[period-2],0))+' 变为 '+integer.format(values.reduce((sum,value)=>sum+value,0))+'。' : '';
+  $('demand-explanation').textContent = '第 '+period+' 期，'+leaders.join('、')+(leaders.length>1?'并列':'')+'需求最高，为 '+integer.format(max)+'。'+trend+' 本实例的高度刻度固定为 0–'+integer.format(limit)+'，顶部留少量空间显示仓库标签。';
+  drawDemand(values,limit);
+}
+
+function stopDemand() {
+  if (demandTimer !== null) clearInterval(demandTimer);
+  demandTimer = null;
+  $('play-demand').textContent = '播放';
+  $('play-demand').setAttribute('aria-pressed','false');
+}
+
+function resetDemand() {
+  stopDemand();
+  demandPeriod.max = historicalDemand[dataset.value][0].length;
+  demandPeriod.value = '1';
+  renderDemand();
+}
+
+demandPeriod.addEventListener('input',renderDemand);
+
+$('play-demand').addEventListener('click',()=>{
+  if (demandTimer !== null) {
+    stopDemand();
+    return;
+  }
+  $('play-demand').textContent='暂停';
+  $('play-demand').setAttribute('aria-pressed','true');
+  demandTimer=setInterval(()=>{
+    demandPeriod.value=String(Number(demandPeriod.value)%Number(demandPeriod.max)+1);
+    renderDemand();
+  },650);
+});
+$('demand-demo').addEventListener('toggle',()=>{
+  if ($('demand-demo').open) renderDemand();
+  else stopDemand();
+});
+new ResizeObserver(renderDemand).observe(demandCanvas);
+
+document.addEventListener('DOMContentLoaded',renderDemand);
 renderInstance();
 </script>
 </body>
