@@ -136,6 +136,10 @@ figcaption strong{display:block;margin-bottom:3px}
 #project[data-view=fleet] .grid{grid-template-areas:"map" "fleet"}
 }
 @media(max-width:720px){.map-pair{grid-template-columns:1fr}}
+#map{cursor:zoom-in}
+.map-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.map-heading button{border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--bg);font-size:13px}
+.map-heading button:disabled{opacity:.6;cursor:default}
 </style>
 </head>
 <body>
@@ -154,7 +158,7 @@ figcaption strong{display:block;margin-bottom:3px}
 <figure>
 <div class="legend" id="depots"></div>
 <div class="map-pair">
-<div class="map-pane"><h3>全局位置</h3><p class="muted">所有仓库和客户保持同一坐标比例</p><canvas id="map" role="img" aria-label="所有仓库和客户的全局位置"></canvas></div>
+<div class="map-pane"><div class="map-heading"><h3 id="global-map-title">全局位置</h3><button id="reset-map" type="button" disabled>返回全局</button></div><p class="muted" id="global-map-hint">点击图中的仓库方块放大。</p><canvas id="map" role="img" aria-label="所有仓库和客户的全局位置"></canvas></div>
 <div class="map-pane"><h3 id="local-title"></h3><p id="local-meta" class="muted map-detail-meta"></p><canvas id="local-map" role="img" aria-label="所选仓库的客户位置局部放大"></canvas></div>
 </div>
 <figcaption><strong>位置与分配</strong><span id="map-explanation"></span></figcaption>
@@ -207,6 +211,10 @@ const questions = [
 ];
 const demandSummary = {"05_increasing_demand":[[90,123.25,144.5,177.75,269],[402,463.5,485.0,494.0,525]],"06_random":[[24,151.25,195.5,221.5,329],[221,265.75,277.5,288.0,337]],"07_random":[[124,138.0,144.0,150.0,174],[14,29.75,42.0,56.25,110],[216,292.5,312.0,344.25,423],[103,192.75,225.0,258.25,415],[331,421.0,458.5,516.25,634]],"08_random":[[1086,1233.0,1428.0,1623.75,1751],[2287,2365.75,2398.0,2449.0,2523]],"09_random":[[810,890.0,914.0,939.5,1005],[666,754.0,781.5,803.0,857]],"10_random":[[92,110.75,118.0,130.0,156],[241,309.0,334.0,363.75,470],[250,317.0,348.5,373.25,472],[389,508.75,550.5,600.5,732],[501,646.25,701.5,769.0,957]],"11_random":[[169,208.75,249.0,275.0,359],[417,457.25,480.5,491.0,538]],"12_random":[[541,575.75,603.0,622.5,682],[953,1008.75,1053.0,1094.0,1222]],"13_random":[[429,467.75,488.5,501.0,537],[1629,1826.75,1902.0,1987.25,2273],[1859,2129.5,2233.0,2326.5,2610],[1054,1315.75,1440.0,1533.25,1746],[3697,3921.75,4035.0,4179.75,4358]]};
 let focus = 0;
+let zoomDepot = null;
+let viewport = null;
+let mapFrame = 0;
+let mapMarkers = [];
 let activeQuestion = null;
 const record = () => instances[dataset.value];
 const currentWindow = () => record().windows[Number(windowPicker.value)];
@@ -217,29 +225,41 @@ const fleetRows = () => record().allocation.map((ids, depot) => ({
   capacity:ids.reduce((total,id)=>total+record().caps[id],0)
 }));
 
+function fitViewport(width, height, depot) {
+  const {depots, groups} = record();
+  const points = depot === null ? [...depots, ...groups.flat()] : [depots[depot], ...groups[depot]];
+  const [[left, right], [bottom, top]] = [0, 1].map(axis => {
+    const values = points.map(point => point[axis]);
+    return [Math.min(...values), Math.max(...values)];
+  });
+  return {
+    x: (left + right) / 2,
+    y: (bottom + top) / 2,
+    scale: Math.min((width - 56) / Math.max(right - left, 1),
+                    (height - 56) / Math.max(top - bottom, 1)),
+  };
+}
+
 function drawPanel(target, selectedOnly) {
   const {depots, groups} = record();
   const indices = selectedOnly ? [focus] : depots.map((_, index) => index);
-  const points = indices.flatMap(index => [depots[index], ...groups[index]]);
   const width = target.clientWidth;
   const height = target.clientHeight;
-  if (width < 50 || height < 50) return;
+  if (width < 60 || height < 60) return;
   const ratio = window.devicePixelRatio || 1;
   target.width = Math.round(width * ratio);
   target.height = Math.round(height * ratio);
   const ctx = target.getContext('2d');
   ctx.scale(ratio, ratio);
-  const bounds = [0, 1].map(axis => {
-    const values = points.map(point => point[axis]);
-    return [Math.min(...values), Math.max(...values)];
-  });
-  const [[left, right], [bottom, top]] = bounds;
-  const scale = Math.min((width - 56) / Math.max(right - left, 1),
-                         (height - 56) / Math.max(top - bottom, 1));
+  const camera = selectedOnly ? fitViewport(width, height, focus) :
+    viewport || fitViewport(width, height, zoomDepot);
   const projectPoint = ([x, y]) => [
-    width / 2 + (x - (left + right) / 2) * scale,
-    height / 2 - (y - (bottom + top) / 2) * scale,
+    width / 2 + (x - camera.x) * camera.scale,
+    height / 2 - (y - camera.y) * camera.scale,
   ];
+  if (!selectedOnly) {
+    mapMarkers = indices.map(index => ({index, point: projectPoint(depots[index])}));
+  }
   ctx.fillStyle = '#f7fbf9';
   ctx.fillRect(0, 0, width, height);
   ctx.strokeStyle = '#e1ebe5';
@@ -291,6 +311,60 @@ function drawMap() {
   drawPanel(canvas, false);
   drawPanel(localCanvas, true);
 }
+
+function stopMapAnimation() {
+  if (mapFrame) cancelAnimationFrame(mapFrame);
+  mapFrame = 0;
+  viewport = null;
+}
+
+function moveMap(depot) {
+  const width = canvas.clientWidth, height = canvas.clientHeight;
+  const start = viewport || fitViewport(width, height, zoomDepot);
+  zoomDepot = depot;
+  stopMapAnimation();
+  $('reset-map').disabled = depot === null;
+  $('global-map-title').textContent = depot === null ? '全局位置' : '仓库 ' + depot + ' · 地图放大';
+  $('global-map-hint').textContent = depot === null ? '点击图中的仓库方块放大。' : '点击「返回全局」查看所有仓库。';
+  if (width < 60 || height < 60 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    drawMap();
+    return;
+  }
+
+  const end = fitViewport(width, height, depot);
+  const started = performance.now();
+  function animate(now) {
+    const elapsed = Math.min(1, (now - started) / 300);
+    const mix = 1 - (1 - elapsed) ** 3;
+    viewport = {
+      x: start.x + (end.x - start.x) * mix,
+      y: start.y + (end.y - start.y) * mix,
+      scale: start.scale * (end.scale / start.scale) ** mix,
+    };
+    if (elapsed < 1) mapFrame = requestAnimationFrame(animate);
+    else stopMapAnimation();
+    drawMap();
+  }
+  mapFrame = requestAnimationFrame(animate);
+}
+
+function selectMapDepot(depot) {
+  focus = depot;
+  Array.from($('depots').children).forEach((element,index)=>element.setAttribute('aria-pressed',focus===index));
+  renderMapExplanation();
+  highlightFleet();
+  moveMap(depot);
+}
+
+canvas.addEventListener('click', event => {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left - canvas.clientLeft;
+  const y = event.clientY - rect.top - canvas.clientTop;
+  const hit = mapMarkers.map(({index, point})=>({index, distance:Math.hypot(point[0]-x,point[1]-y)}))
+    .filter(marker=>marker.distance<=14).sort((a,b)=>a.distance-b.distance)[0];
+  if (hit) selectMapDepot(hit.index);
+});
+$('reset-map').addEventListener('click',()=>moveMap(null));
 
 function renderDepots() {
   $('depots').innerHTML = record().depots.map((_,d) =>
@@ -380,6 +454,7 @@ function renderAnswer() {
 function renderInstance() {
   const d = record();
   focus = 0;
+  moveMap(null);
   windowPicker.replaceChildren(...d.windows.map((_,i)=>new Option('窗口 '+(i+1),i)));
   $('stats').innerHTML = [[d.depots.length,'仓库'],[d.groups.reduce((n,g)=>n+g.length,0),'客户'],[d.caps.length,'车辆'],[d.periods,'历史周期']].map(([count,label])=>'<span class="stat"><b>'+integer.format(count)+'</b>'+label+'</span>').join('');
   $('warning').hidden = !d.ignored;
@@ -418,12 +493,7 @@ $('show-fleet').addEventListener('click',()=>showView('fleet'));
 $('depots').addEventListener('click',event=>{
   const button = event.target.closest('[data-depot]');
   if (!button) return;
-  const depot = Number(button.dataset.depot);
-  focus = depot;
-  Array.from($('depots').children).forEach((element,index)=>element.setAttribute('aria-pressed',focus===index));
-  drawMap();
-  renderMapExplanation();
-  highlightFleet();
+  selectMapDepot(Number(button.dataset.depot));
 });
 function highlightFleet() {
   [...$('fleet').rows].forEach((row,index)=>row.dataset.focused=String(index===focus));
