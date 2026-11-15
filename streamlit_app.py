@@ -14,6 +14,14 @@ STRATEGIES = {
     "trend": "趋势场景",
     "local_search": "局部搜索",
 }
+SUGGESTED_QUESTIONS = (
+    "哪种分配策略的估算成本最低？",
+    "局部搜索与均衡分配相差多少？",
+    "五种分配策略的估算成本如何排序？",
+    "哪个仓库分到的车辆最多？",
+    "哪个仓库分到的总载重最高？",
+    "这个验证窗口用了哪些训练期和验证期？",
+)
 
 
 def load_results():
@@ -35,8 +43,17 @@ def render_ai_analysis(instance, report, window, validation):
     if not api_key:
         st.info("请在 Streamlit 的 App settings → Secrets 中配置 DEEPSEEK_API_KEY。")
 
+    st.markdown("**推荐问题**")
+    selected_question = None
+    columns = st.columns(2)
+    for index, suggestion in enumerate(SUGGESTED_QUESTIONS):
+        with columns[index % len(columns)]:
+            if st.button(suggestion, key=f"analysis_suggestion_{index}",
+                         disabled=not api_key, use_container_width=True):
+                selected_question = suggestion
+
     with st.form(key=f"analysis_{instance}_{window}"):
-        question = st.text_area(
+        custom_question = st.text_area(
             "关于当前结果，你想了解什么？",
             placeholder="局部搜索比均衡分配省了多少？两者的估算成本分别是多少？",
             max_chars=500,
@@ -44,12 +61,14 @@ def render_ai_analysis(instance, report, window, validation):
         )
         submitted = st.form_submit_button("问 DeepSeek", disabled=not api_key)
 
-    if not submitted:
+    question = selected_question or (custom_question.strip() if submitted else None)
+    if question is None:
         return
-    if not question.strip():
+    if not question:
         st.warning("请输入问题。")
         return
 
+    st.text(f"问题：{question}")
     costs = validation["costs"]
     context = {
         "数据": instance,
