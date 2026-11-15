@@ -43,14 +43,18 @@ def cost_summary(validation):
     return ranking, difference
 
 
+def deepseek_key():
+    try:
+        return str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
+    except FileNotFoundError:
+        return ""
+
+
 def render_ai_analysis(instance, report, window, validation):
     st.subheader("AI 辅助分析")
     st.caption("DeepSeek 根据所选数据和验证窗口解释结果。问题与相关作业数据会发送给 DeepSeek。")
 
-    try:
-        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
-    except FileNotFoundError:
-        api_key = ""
+    api_key = deepseek_key()
 
     if not api_key:
         st.info("请在 Streamlit 的 App settings → Secrets 中配置 DEEPSEEK_API_KEY。")
@@ -98,18 +102,23 @@ def render_ai_analysis(instance, report, window, validation):
         ],
         "问题": question.strip(),
     }
+    instruction = (
+        "你是车辆分配课程作业的分析助手。用简体中文简短解释给定的数据，准确引用数字。"
+        "验证窗口的成本是独立训练方案的估算值，最终分配来自全历史。"
+        "成本排名按显示到小数点后两位的数值计算，名次相同表示并列。"
+        "资料缺少逐仓库成本或分车的具体原因时，明确说明数据不足。"
+        "仅回答本作业结果和算法相关的问题。"
+    )
+    render_deepseek(context, instruction, api_key)
+
+
+def ask_deepseek(context, instruction, api_key):
     payload = {
         "model": "deepseek-flash",
         "thinking": {"type": "disabled"},
         "max_tokens": 450,
         "messages": [
-            {"role": "system", "content": (
-                "你是车辆分配课程作业的分析助手。用简体中文简短解释给定的数据，准确引用数字。"
-                "验证窗口的成本是独立训练方案的估算值，最终分配来自全历史。"
-                "成本排名按显示到小数点后两位的数值计算，名次相同表示并列。"
-                "资料缺少逐仓库成本或分车的具体原因时，明确说明数据不足，禁止编造。"
-                "仅回答本作业结果和算法相关的问题。"
-            )},
+            {"role": "system", "content": instruction},
             {"role": "user", "content": json.dumps(context, ensure_ascii=False)},
         ],
     }
@@ -119,10 +128,20 @@ def render_ai_analysis(instance, report, window, validation):
         headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
         method="POST",
     )
-    with st.spinner("正在分析当前结果…"):
+    with urlopen(request, timeout=30) as response:
+        return json.load(response)["choices"][0]["message"]["content"]
+
+
+@st.cache_data(show_spinner=False, max_entries=64)
+def cached_warehouse_analysis(context, instruction, _api_key):
+    return ask_deepseek(context, instruction, _api_key)
+
+
+def render_deepseek(context, instruction, api_key, *, warehouse=False):
+    request_answer = cached_warehouse_analysis if warehouse else ask_deepseek
+    with st.spinner("DeepSeek 正在解读…"):
         try:
-            with urlopen(request, timeout=30) as response:
-                answer = json.load(response)["choices"][0]["message"]["content"]
+            answer = request_answer(context, instruction, api_key)
         except HTTPError as error:
             messages = {
                 401: "DeepSeek 拒绝了密钥，请检查 Streamlit Secrets 中的值。",
@@ -141,8 +160,57 @@ def render_ai_analysis(instance, report, window, validation):
         st.info("本次未返回分析内容，可以换个问题再试。")
 
 
+def render_warehouse_analysis(results):
+    instance = st.query_params.get("instance", "")
+    report = results.get(instance)
+    if report is None:
+        st.error("未找到该测试实例。")
+        return
+
+    raw_depot = st.query_params.get("depot", "")
+    depot = next((i for i in range(len(report["allocation"])) if str(i) == raw_depot), None)
+    if depot is None:
+        st.error("未找到该仓库。")
+        return
+    if depot == 0:
+        st.info("仓库 0 是对比基准。请选择其他仓库。")
+        return
+
+    def metrics(index):
+        return {
+            "客户数": report["declared_customer_counts"][index],
+            "车辆数": len(report["allocation"][index]),
+            "总载重": report["capacities"][index],
+        }
+
+    selected, baseline = metrics(depot), metrics(0)
+    context = {
+        "实例": instance,
+        "所选仓库": depot,
+        "基准仓库": 0,
+        "所选仓库数据": selected,
+        "仓库0数据": baseline,
+        "所选仓库减去仓库0": {key: selected[key] - baseline[key] for key in selected},
+    }
+    api_key = deepseek_key()
+    if not api_key:
+        st.info("DeepSeek 尚未配置，地图旁的数值仍可查看。")
+        return
+    instruction = (
+        "用简体中文在120字以内解读所选仓库与仓库0的客户数、车辆数、总载重差异。"
+        "只引用给定数值，说明车辆数与总载重分别表示什么。"
+        "这些是最终分车结果。客户数不是订单量，数据不足以判断服务水平、成本或分配原因。"
+        "使用纯文本。"
+    )
+    render_deepseek(context, instruction, api_key, warehouse=True)
+
+
 def main():
     st.set_page_config(page_title="编程作业1 · 结果分析", page_icon="🚚")
+    if st.query_params.get("view") == "warehouse":
+        render_warehouse_analysis(load_results())
+        return
+
     st.title("多仓库车辆分配 · 结果分析")
     st.caption("查看求解器生成的车辆分配和滚动验证成本。")
 
