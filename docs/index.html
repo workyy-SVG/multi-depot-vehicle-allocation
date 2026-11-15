@@ -124,6 +124,18 @@ figcaption strong{display:block;margin-bottom:3px}
 .ai-box b{position:absolute;top:3px;height:14px;min-width:1px;background:#a9d9c9;border:1px solid #427264;border-radius:2px}
 .ai-box em{position:absolute;top:2px;width:2px;height:16px;background:#164c3c}
 .ai-box-values{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.map-pair{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:12px;margin-top:14px}
+.map-pane{min-width:0}
+.map-pane h3{font-size:15px;margin:0;color:#163f35}
+.map-pair canvas{height:clamp(240px,37vh,365px);margin-top:6px;background:#f7fbf9}
+.map-detail-meta{min-height:1.55em}
+#project[data-view=overview] .grid{grid-template-areas:"map map" "overview overview"}
+#project[data-view=fleet] .grid{grid-template-areas:"map map" "fleet fleet"}
+@media(max-width:1030px){
+#project[data-view=overview] .grid{grid-template-areas:"map" "overview"}
+#project[data-view=fleet] .grid{grid-template-areas:"map" "fleet"}
+}
+@media(max-width:720px){.map-pair{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -136,7 +148,18 @@ figcaption strong{display:block;margin-bottom:3px}
 <p class="note" id="warning" hidden></p>
 </div>
 <div class="grid">
-<section class="card map"><h2>仓库和客户位置</h2><p class="muted">方块表示仓库，圆点表示客户。点击仓库编号查看分车。</p><figure><canvas id="map" role="img" aria-label="仓库和客户坐标分布"></canvas><div class="legend" id="depots"></div><figcaption><strong>读图提示</strong><span id="map-explanation"></span></figcaption></figure></section>
+<section class="card map">
+<h2>仓库和客户位置</h2>
+<p class="muted">选择仓库查看客户分布。方形标记为仓库，圆点为客户。</p>
+<figure>
+<div class="legend" id="depots"></div>
+<div class="map-pair">
+<div class="map-pane"><h3>全局位置</h3><p class="muted">所有仓库和客户保持同一坐标比例</p><canvas id="map" role="img" aria-label="所有仓库和客户的全局位置"></canvas></div>
+<div class="map-pane"><h3 id="local-title"></h3><p id="local-meta" class="muted map-detail-meta"></p><canvas id="local-map" role="img" aria-label="所选仓库的客户位置局部放大"></canvas></div>
+</div>
+<figcaption><strong>位置与分配</strong><span id="map-explanation"></span></figcaption>
+</figure>
+</section>
 <section class="card overview" data-section="overview">
 <h2>项目要解决什么</h2>
 <dl><dt>输入</dt><dd>客户位置、历史订单量、仓库位置与车辆载重。</dd><dt>目标</dt><dd>提前分配车辆，降低估算配送成本。</dd><dt>算法</dt><dd>构造多种初始分配，再尝试跨仓库移动和交换车辆。</dd><dt>输出与验证</dt><dd>输出每个仓库的车辆清单，在后续验证期比较配送距离和未服务罚分。</dd></dl>
@@ -170,6 +193,7 @@ const project = $('project');
 const dataset = $('instance');
 const windowPicker = $('window');
 const canvas = $('map');
+const localCanvas = $('local-map');
 const palettes = {
   light:['#087b66','#1d5f9e','#ae562b','#733fa0','#8c6a01'],
   dark:['#70ead0','#82bcff','#ffa877','#d4afff','#f4d368']
@@ -182,7 +206,7 @@ const questions = [
   '哪个仓库车辆最多？','哪个仓库总载重最高？','用了哪些验证期？','各仓库需求波动多大？'
 ];
 const demandSummary = {"05_increasing_demand":[[90,123.25,144.5,177.75,269],[402,463.5,485.0,494.0,525]],"06_random":[[24,151.25,195.5,221.5,329],[221,265.75,277.5,288.0,337]],"07_random":[[124,138.0,144.0,150.0,174],[14,29.75,42.0,56.25,110],[216,292.5,312.0,344.25,423],[103,192.75,225.0,258.25,415],[331,421.0,458.5,516.25,634]],"08_random":[[1086,1233.0,1428.0,1623.75,1751],[2287,2365.75,2398.0,2449.0,2523]],"09_random":[[810,890.0,914.0,939.5,1005],[666,754.0,781.5,803.0,857]],"10_random":[[92,110.75,118.0,130.0,156],[241,309.0,334.0,363.75,470],[250,317.0,348.5,373.25,472],[389,508.75,550.5,600.5,732],[501,646.25,701.5,769.0,957]],"11_random":[[169,208.75,249.0,275.0,359],[417,457.25,480.5,491.0,538]],"12_random":[[541,575.75,603.0,622.5,682],[953,1008.75,1053.0,1094.0,1222]],"13_random":[[429,467.75,488.5,501.0,537],[1629,1826.75,1902.0,1987.25,2273],[1859,2129.5,2233.0,2326.5,2610],[1054,1315.75,1440.0,1533.25,1746],[3697,3921.75,4035.0,4179.75,4358]]};
-let focus = -1;
+let focus = 0;
 let activeQuestion = null;
 const record = () => instances[dataset.value];
 const currentWindow = () => record().windows[Number(windowPicker.value)];
@@ -193,48 +217,79 @@ const fleetRows = () => record().allocation.map((ids, depot) => ({
   capacity:ids.reduce((total,id)=>total+record().caps[id],0)
 }));
 
-function drawMap() {
-  const {depots,groups} = record();
-  const points = [...depots,...groups.flat()];
-  const bounds = [0,1].map(i => {
-    const values = points.map(p => p[i]);
-    return [Math.min(...values),Math.max(...values)];
-  });
-  const width = canvas.clientWidth, height = canvas.clientHeight;
-  if (!width || !height) return;
+function drawPanel(target, selectedOnly) {
+  const {depots, groups} = record();
+  const indices = selectedOnly ? [focus] : depots.map((_, index) => index);
+  const points = indices.flatMap(index => [depots[index], ...groups[index]]);
+  const width = target.clientWidth;
+  const height = target.clientHeight;
+  if (width < 50 || height < 50) return;
   const ratio = window.devicePixelRatio || 1;
-  canvas.width = Math.round(width*ratio);
-  canvas.height = Math.round(height*ratio);
-  const ctx = canvas.getContext('2d');
-  ctx.scale(ratio,ratio);
-  const style = getComputedStyle(project);
-  ctx.fillStyle = style.getPropertyValue('--bg');
-  ctx.fillRect(0,0,width,height);
-  ctx.strokeStyle = style.getPropertyValue('--line');
-  for (let x=25;x<width;x+=32) {
-    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke();
-  }
-  for (let y=25;y<height;y+=32) {
-    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();
-  }
-  const [[x0,x1],[y0,y1]] = bounds;
-  const scale = Math.min((width-48)/Math.max(x1-x0,1),(height-48)/Math.max(y1-y0,1));
-  const projectPoint = ([x,y]) => [width/2+(x-(x0+x1)/2)*scale,height/2-(y-(y0+y1)/2)*scale];
-  groups.forEach((group,d) => {
-    ctx.globalAlpha = focus===-1 || d===focus ? .67 : .12;
-    ctx.fillStyle = colors()[d % colors().length];
-    group.forEach(point => {
-      const [x,y] = projectPoint(point);
-      ctx.beginPath();ctx.arc(x,y,group.length>400?1.6:2.5,0,Math.PI*2);ctx.fill();
-    });
+  target.width = Math.round(width * ratio);
+  target.height = Math.round(height * ratio);
+  const ctx = target.getContext('2d');
+  ctx.scale(ratio, ratio);
+  const bounds = [0, 1].map(axis => {
+    const values = points.map(point => point[axis]);
+    return [Math.min(...values), Math.max(...values)];
   });
-  depots.forEach((point,d) => {
-    const [x,y] = projectPoint(point);
-    ctx.globalAlpha = focus===-1 || d===focus ? 1 : .45;
-    ctx.fillStyle = colors()[d % colors().length];
-    ctx.fillRect(x-6,y-6,12,12);
-    ctx.font = 'bold 12px sans-serif';ctx.fillText(String(d),x+9,y-7);
-  });
+  const [[left, right], [bottom, top]] = bounds;
+  const scale = Math.min((width - 56) / Math.max(right - left, 1),
+                         (height - 56) / Math.max(top - bottom, 1));
+  const projectPoint = ([x, y]) => [
+    width / 2 + (x - (left + right) / 2) * scale,
+    height / 2 - (y - (bottom + top) / 2) * scale,
+  ];
+  ctx.fillStyle = '#f7fbf9';
+  ctx.fillRect(0, 0, width, height);
+  ctx.strokeStyle = '#e1ebe5';
+  ctx.beginPath();
+  for (let x = 25; x < width; x += 42) {
+    ctx.moveTo(x, 0);
+    ctx.lineTo(x, height);
+  }
+  for (let y = 25; y < height; y += 42) {
+    ctx.moveTo(0, y);
+    ctx.lineTo(width, y);
+  }
+  ctx.stroke();
+
+  const order = [...indices.filter(index => index !== focus), focus];
+  for (const index of order) {
+    ctx.globalAlpha = index === focus ? (selectedOnly ? .7 : .55) : .19;
+    ctx.fillStyle = colors()[index % colors().length];
+    const radius = selectedOnly ? (groups[index].length > 400 ? 2.1 : 3) : 1.9;
+    for (const point of groups[index]) {
+      const [x, y] = projectPoint(point);
+      ctx.beginPath();
+      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  for (const index of order) {
+    const [x, y] = projectPoint(depots[index]);
+    const radius = index === focus ? 7 : 4;
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = colors()[index % colors().length];
+    ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - radius, y - radius, radius * 2, radius * 2);
+    if (index === focus) {
+      const labelX = Math.max(5, Math.min(x + 11, width - 67));
+      const labelY = Math.max(17, y - 10);
+      ctx.font = 'bold 13px sans-serif';
+      ctx.lineWidth = 4;
+      ctx.strokeText('仓库 ' + index, labelX, labelY);
+      ctx.fillStyle = '#163f35';
+      ctx.fillText('仓库 ' + index, labelX, labelY);
+    }
+  }
+}
+
+function drawMap() {
+  drawPanel(canvas, false);
+  drawPanel(localCanvas, true);
 }
 
 function renderDepots() {
@@ -324,7 +379,7 @@ function renderAnswer() {
 
 function renderInstance() {
   const d = record();
-  focus = -1;
+  focus = 0;
   windowPicker.replaceChildren(...d.windows.map((_,i)=>new Option('窗口 '+(i+1),i)));
   $('stats').innerHTML = [[d.depots.length,'仓库'],[d.groups.reduce((n,g)=>n+g.length,0),'客户'],[d.caps.length,'车辆'],[d.periods,'历史周期']].map(([count,label])=>'<span class="stat"><b>'+integer.format(count)+'</b>'+label+'</span>').join('');
   $('warning').hidden = !d.ignored;
@@ -333,6 +388,7 @@ function renderInstance() {
   renderDepots();
   renderMapExplanation();
   renderCapacity();
+  highlightFleet();
   renderCosts();
   drawMap();
 }
@@ -363,9 +419,9 @@ $('depots').addEventListener('click',event=>{
   const button = event.target.closest('[data-depot]');
   if (!button) return;
   const depot = Number(button.dataset.depot);
-  focus = focus===depot ? -1 : depot;
+  focus = depot;
   Array.from($('depots').children).forEach((element,index)=>element.setAttribute('aria-pressed',focus===index));
-  showView('fleet');
+  drawMap();
   renderMapExplanation();
   highlightFleet();
 });
@@ -384,16 +440,13 @@ $('ask').addEventListener('submit',event=>{
 });
 function renderMapExplanation() {
   const {groups} = record();
-  const count = groups.reduce((sum, group) => sum + group.length, 0);
-  if (focus >= 0) {
-    const customers = groups[focus].length;
-    const share = count ? (100 * customers / count).toFixed(1) : '0.0';
-    $('map-explanation').textContent = '仓库 '+focus+' 对应 '+integer.format(customers)+' 个客户，占当前实例的 '+share+'%。可以在车辆表中核对该仓库的分配。';
-    return;
-  }
-  const largest = Math.max(...groups.map(group => group.length));
-  const leaders = groups.flatMap((group, depot) => group.length === largest ? ['仓库 '+depot] : []);
-  $('map-explanation').textContent = '当前实例有 '+groups.length+' 个仓库、'+integer.format(count)+' 个客户。'+leaders.join('、')+(leaders.length>1?'并列':'')+'负责的客户最多，各有 '+integer.format(largest)+' 个。';
+  const row = fleetRows()[focus];
+  const count = groups[focus].length;
+  $('local-title').textContent = '仓库 ' + focus + ' · 局部放大';
+  $('local-meta').textContent = integer.format(count) + ' 个客户 · 局部图单独缩放';
+  localCanvas.setAttribute('aria-label', '仓库 ' + focus + ' 和 ' + count + ' 个客户的坐标');
+  $('map-explanation').textContent = '仓库 ' + focus + ' 负责 ' + integer.format(count) +
+    ' 个客户，共分到 ' + row.count + ' 辆车，总载重 ' + integer.format(row.capacity) + '。';
 }
 
 function renderCapacity() {
@@ -447,7 +500,9 @@ $('heat-body').addEventListener('click', event => {
   $('bars').scrollIntoView({block:'nearest',behavior:'smooth'});
 });
 
-new ResizeObserver(drawMap).observe(canvas);
+const mapObserver = new ResizeObserver(drawMap);
+mapObserver.observe(canvas);
+mapObserver.observe(localCanvas);
 renderInstance();
 </script>
 </body>
