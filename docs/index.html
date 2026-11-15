@@ -106,6 +106,24 @@ figcaption strong{display:block;margin-bottom:3px}
 .heat button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .heat .table-wrap{margin-bottom:8px}
 .fleet figure{margin-top:18px}
+.prompts button[aria-pressed=true]{background:#d6efe5;border-color:#087b66;color:#145344;font-weight:700}
+.ai-figure{margin:18px 0;padding:16px;border:1px solid var(--line);border-radius:10px;background:#fbfdfc}
+.ai-figure h3{margin:0 0 8px;font-size:17px}
+.ai-figure figcaption .result{margin:0;padding:0;border:0;background:none;font-size:inherit}
+.ai-figure .barrow{grid-template-columns:90px minmax(0,1fr) 80px}
+.ai-figure .fill{height:14px}
+.ai-share{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.ai-donut{width:130px;height:130px;border-radius:50%;position:relative;flex:none}
+.ai-donut::after{content:"";position:absolute;inset:28%;border-radius:inherit;background:#fbfdfc}
+.ai-legend{list-style:none;padding:0;margin:0}
+.ai-legend li{padding:3px 0}
+.ai-timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:7px;list-style:none;margin:12px 0;padding:0}
+.ai-timeline li{background:#dceee6;padding:9px;border-radius:6px}
+.ai-box{position:relative;height:20px;min-width:0;background:#edf4f0;border-radius:3px}
+.ai-box i{position:absolute;top:9px;border-top:2px solid #427264}
+.ai-box b{position:absolute;top:3px;height:14px;min-width:1px;background:#a9d9c9;border:1px solid #427264;border-radius:2px}
+.ai-box em{position:absolute;top:2px;width:2px;height:16px;background:#164c3c}
+.ai-box-values{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -142,7 +160,7 @@ figcaption strong{display:block;margin-bottom:3px}
 <p class="muted">局部搜索相对均衡分配的成本变化。↓ 表示更省，＝表示持平，↑ 表示更贵。点击格子查看对应成本图。</p>
 <div class="table-wrap"><table><thead><tr><th scope="col">测试实例</th><th scope="col">窗口 1</th><th scope="col">窗口 2</th></tr></thead><tbody id="heat-body"></tbody></table></div>
 <figcaption><strong>整体结果与例外</strong><span id="heat-explanation"></span></figcaption></figure></section>
-<section class="card ai" data-section="ai" hidden><h2>AI 辅助分析</h2><p class="muted">本地预览使用作业数据演示推荐问题。自由问答可在现有 Streamlit 页面使用。</p><div class="prompts" id="prompts"></div><form id="ask"><input id="question" aria-label="自定义问题" placeholder="输入你想问的问题" maxlength="500" required><button>前往问答</button></form><p class="result" id="answer" aria-live="polite" hidden></p><a id="ai-link" target="_blank" rel="noopener" href="https://workyy-svg.github.io/multi-depot-vehicle-allocation/ai/">打开现有问答页 ↗</a></section>
+<section class="card ai" data-section="ai" hidden><h2>AI 辅助分析</h2><p class="muted">点选推荐问题查看数据图和解读。自由提问可在 Streamlit 使用。</p><div class="prompts" id="prompts"></div><form id="ask"><input id="question" aria-label="自定义问题" placeholder="输入你想问的问题" maxlength="500" required><button>前往问答</button></form><figure class="ai-figure" id="ai-figure" hidden><h3 id="ai-chart-title"></h3><div id="ai-chart"></div><figcaption><strong>结果解读</strong><p class="result" id="answer" aria-live="polite"></p></figcaption></figure><p class="note" id="ask-status" aria-live="polite"></p><a id="ai-link" target="_blank" rel="noopener" href="https://workyy-svg.github.io/multi-depot-vehicle-allocation/ai/">打开现有问答页 ↗</a></section>
 </div>
 </div></main>
 <script src="data.js"></script>
@@ -161,8 +179,9 @@ const integer = new Intl.NumberFormat('zh-CN');
 const labels = {balanced:'均衡分配',mean:'平均需求',risk:'需求与波动',trend:'趋势场景',local_search:'局部搜索'};
 const questions = [
   '哪种策略成本最低？','局部搜索相差多少？','五种策略如何排名？',
-  '哪个仓库车辆最多？','哪个仓库总载重最高？','用了哪些验证期？'
+  '哪个仓库车辆最多？','哪个仓库总载重最高？','用了哪些验证期？','各仓库需求波动多大？'
 ];
+const demandSummary = {"05_increasing_demand":[[90,123.25,144.5,177.75,269],[402,463.5,485.0,494.0,525]],"06_random":[[24,151.25,195.5,221.5,329],[221,265.75,277.5,288.0,337]],"07_random":[[124,138.0,144.0,150.0,174],[14,29.75,42.0,56.25,110],[216,292.5,312.0,344.25,423],[103,192.75,225.0,258.25,415],[331,421.0,458.5,516.25,634]],"08_random":[[1086,1233.0,1428.0,1623.75,1751],[2287,2365.75,2398.0,2449.0,2523]],"09_random":[[810,890.0,914.0,939.5,1005],[666,754.0,781.5,803.0,857]],"10_random":[[92,110.75,118.0,130.0,156],[241,309.0,334.0,363.75,470],[250,317.0,348.5,373.25,472],[389,508.75,550.5,600.5,732],[501,646.25,701.5,769.0,957]],"11_random":[[169,208.75,249.0,275.0,359],[417,457.25,480.5,491.0,538]],"12_random":[[541,575.75,603.0,622.5,682],[953,1008.75,1053.0,1094.0,1222]],"13_random":[[429,467.75,488.5,501.0,537],[1629,1826.75,1902.0,1987.25,2273],[1859,2129.5,2233.0,2326.5,2610],[1054,1315.75,1440.0,1533.25,1746],[3697,3921.75,4035.0,4179.75,4358]]};
 let focus = -1;
 let activeQuestion = null;
 const record = () => instances[dataset.value];
@@ -243,7 +262,8 @@ function renderCosts() {
 }
 
 function renderAnswer() {
-  $('answer').hidden = activeQuestion===null;
+  $('ai-figure').hidden = activeQuestion===null;
+  Array.from($('prompts').children).forEach((button,index)=>button.setAttribute('aria-pressed',index===activeQuestion));
   if (activeQuestion===null) return;
   const w = currentWindow();
   const ranked = Object.entries(labels).map(([key,label])=>({label, cents:costCents(w.costs[key])})).sort((a,b)=>a.cents-b.cents);
@@ -260,13 +280,51 @@ function renderAnswer() {
     winners('capacity',maxCapacity)+'的总载重最高，为 '+integer.format(maxCapacity)+'。',
     $('periods').textContent+'。'
   ];
+  const titles = ['最低成本策略','两种策略的成本差异','五种策略的成本排名','各仓库车辆数占比','各仓库总载重占比','训练和验证周期','各仓库历史总需求箱线图'];
+  $('ai-chart-title').textContent = titles[activeQuestion];
+  const chart = $('ai-chart');
+  if (activeQuestion <= 2) {
+    const rows = activeQuestion===1 ? ranked.filter(row=>['均衡分配','局部搜索'].includes(row.label)) : ranked;
+    const max = Math.max(1,...rows.map(row=>row.cents));
+    chart.innerHTML = rows.map(row=>'<div class="barrow"><span>'+row.label+'</span><div class="track"><div class="fill '+(row.cents===rows[0].cents?'local':'')+'" style="width:'+100*row.cents/max+'%"></div></div><span class="amount">'+formatter.format(row.cents/100)+'</span></div>').join('');
+  } else if (activeQuestion <= 4) {
+    const key = activeQuestion===3 ? 'count' : 'capacity';
+    const total = fleet.reduce((sum,row)=>sum+row[key],0);
+    let position = 0;
+    const segments = fleet.map(row=>{
+      const end = position + 100*row[key]/Math.max(total,1);
+      const color = colors()[row.depot%colors().length];
+      const segment = color+' '+position+'% '+end+'%';
+      position = end;
+      return segment;
+    });
+    const legend = fleet.map(row=>'<li><span class="dot" style="background:'+colors()[row.depot%colors().length]+'"></span>仓库 '+row.depot+' · '+integer.format(row[key])+'（'+(100*row[key]/Math.max(total,1)).toFixed(1)+'%）</li>').join('');
+    chart.innerHTML = '<div class="ai-share"><div class="ai-donut" aria-hidden="true" style="background:conic-gradient('+segments.join(',')+')"></div><ul class="ai-legend">'+legend+'</ul></div>';
+    answers[activeQuestion] += ' 圆环按'+(key==='count'?'车辆数':'总载重')+'的占比划分，数据来自最终车辆分配。';
+  } else if (activeQuestion===5) {
+    const phases = ['训练 · 第 1–'+w.train_end_exclusive+' 期',...w.test_periods.map(period=>'验证 · 第 '+(period+1)+' 期')];
+    chart.innerHTML = '<ol class="ai-timeline">'+phases.map(label=>'<li>'+label+'</li>').join('')+'</ol>';
+    answers[activeQuestion] += ' 验证期位于训练期之后，评估数据来自图中列出的抽样周期。';
+  } else {
+    const boxes = demandSummary[dataset.value];
+    const max = Math.max(1,...boxes.map(values=>values[4]));
+    const fmt = new Intl.NumberFormat('zh-CN',{maximumFractionDigits:2});
+    chart.innerHTML = boxes.map(([low,q1,mid,q3,high],depot)=>{
+      const widths = [low,high-low,q1,q3-q1,mid].map(value=>100*value/max);
+      const values = [low,q1,mid,q3,high].map(value=>fmt.format(value)).join(' / ');
+      return '<div class="barrow"><span>仓库 '+depot+'</span><div class="ai-box" aria-hidden="true"><i style="left:'+widths[0]+'%;width:'+widths[1]+'%"></i><b style="left:'+widths[2]+'%;width:'+widths[3]+'%"></b><em style="left:'+widths[4]+'%"></em></div></div><small class="ai-box-values">'+values+'</small>';
+    }).join('');
+    const middleRanges = boxes.map(values=>values[3]-values[1]);
+    const widest = Math.max(...middleRanges);
+    const depots = middleRanges.flatMap((value,depot)=>Math.abs(value-widest)<1e-8?['仓库 '+depot]:[]);
+    answers[6] = depots.join('、')+'的中间 50% 需求跨度最大，为 '+fmt.format(widest)+'。每行数值依次为最小值、下四分位数、中位数、上四分位数、最大值。使用全部历史周期的仓库总需求。';
+  }
   $('answer').textContent = answers[activeQuestion];
 }
 
 function renderInstance() {
   const d = record();
   focus = -1;
-  activeQuestion = null;
   windowPicker.replaceChildren(...d.windows.map((_,i)=>new Option('窗口 '+(i+1),i)));
   $('stats').innerHTML = [[d.depots.length,'仓库'],[d.groups.reduce((n,g)=>n+g.length,0),'客户'],[d.caps.length,'车辆'],[d.periods,'历史周期']].map(([count,label])=>'<span class="stat"><b>'+integer.format(count)+'</b>'+label+'</span>').join('');
   $('warning').hidden = !d.ignored;
@@ -321,8 +379,8 @@ $('ask').addEventListener('submit',event=>{
   const target = new URL($('ai-link').href);
   window.open(target.href,'_blank','noopener');
   activeQuestion=null;
-  $('answer').hidden=false;
-  $('answer').textContent='已打开现有问答页。请在问答框中输入：'+$('question').value.trim();
+  renderAnswer();
+  $('ask-status').textContent='已打开现有问答页。请在问答框中输入：'+$('question').value.trim();
 });
 function renderMapExplanation() {
   const {groups} = record();
