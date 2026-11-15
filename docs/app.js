@@ -49,17 +49,24 @@ function renderFleet() {
     const total = ids.reduce((n,v)=>n+data.caps[v],0);
     return '<tr><td><button type="button" data-depot="'+d+'" aria-pressed="'+(d===activeDepot)+'" style="color:'+colors[d % colors.length]+'">'+d+'</button></td><td>'+ids.length+'</td><td>'+total+'</td><td>'+ids.map(v=>v+'（'+data.caps[v]+'）').join('、')+'</td></tr>';
   }).join('');
-  document.querySelector('#data-note').textContent = data.ignored ? '原始数据多出 '+data.ignored+' 行客户记录，按文件头统计。' : '';
+  document.querySelector('#data-note').textContent = data.ignored ? '原始数据多出 '+data.ignored+' 行客户记录，当前按文件头读取，额外记录的归属待课程方确认。' : '';
 }
 function renderCosts() {
   const {windows} = instances[instance.value];
   const entry = windows[Number(windowSelect.value)];
   const scores = entry.costs;
+  const aiLink = new URL(document.querySelector('#ai-link').href);
+  aiLink.search = new URLSearchParams({instance: instance.value, window: windowSelect.value});
+  document.querySelector('#ai-link').href = aiLink.toString();
   const max = Math.max(1,...Object.values(scores));
   document.querySelector('#periods').textContent = '训练使用第 1–'+entry.train_end_exclusive+' 期，验证第 '+entry.test_periods.map(x=>x+1).join('、')+' 期。';
   document.querySelector('#costs').innerHTML = Object.entries(labels).map(([name,label])=>'<div class="row"><span>'+label+'</span><div class="track"><div class="bar '+(name==='local_search'?'selected':'')+'" style="width:'+scores[name]/max*100+'%"></div></div><span class="value">'+format.format(scores[name])+'</span></div>').join('');
+  const rounded = Object.values(scores).map(score => Math.round(score * 100));
+  const minimum = Math.min(...rounded);
+  const leaders = Object.entries(labels).filter(([key]) => Math.round(scores[key] * 100) === minimum).map(([, label]) => label);
+  const best = '最低成本为 ' + format.format(minimum / 100) + '（' + leaders.join('、') + '）。';
   const diff = scores.local_search - scores.balanced;
-  document.querySelector('#comparison').textContent = Math.abs(diff)<1e-7 ? '局部搜索与均衡分配的估算成本持平。' : '局部搜索比均衡分配'+(diff<0?'低 ':'高 ')+format.format(Math.abs(diff))+'。';
+  document.querySelector('#comparison').textContent = best + (Math.abs(diff)<1e-7 ? '局部搜索与均衡分配的估算成本持平。' : '局部搜索比均衡分配'+(diff<0?'低 ':'高 ')+format.format(Math.abs(diff))+'。');
 }
 function render() {
   activeDepot = -1;
