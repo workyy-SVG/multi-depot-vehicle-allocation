@@ -109,7 +109,7 @@ form{flex-wrap:wrap}
 </section>
 <section class="card fleet" data-section="fleet" hidden><h2>最终车辆分配</h2><p class="muted">根据全部历史生成</p><div class="table-wrap"><table><thead><tr><th>仓库</th><th>车辆数</th><th>总载重</th><th>车辆编号</th></tr></thead><tbody id="fleet"></tbody></table></div></section>
 <section class="card cost" data-section="cost" hidden><h2>各策略的验证成本</h2><p class="muted" id="periods"></p><div id="bars"></div><p class="result" id="cost-result"></p></section>
-<section class="card ai" data-section="ai" hidden><h2>AI 辅助分析</h2><p class="muted">本地预览使用作业数据演示推荐问题。自由问答可在现有 Streamlit 页面使用。</p><div class="prompts" id="prompts"></div><form id="ask"><input id="question" aria-label="自定义问题" placeholder="输入你想问的问题" maxlength="500" required><button>前往问答</button></form><p class="result" id="answer" aria-live="polite" hidden></p><a id="ai-link" target="_blank" rel="noopener" href="https://multi-depot-vehicle-allocation-q5pvak8radnex77ftefspu.streamlit.app/">打开现有问答页 ↗</a></section>
+<section class="card ai" data-section="ai" hidden><h2>AI 辅助分析</h2><p class="muted">本地预览使用作业数据演示推荐问题。自由问答可在现有 Streamlit 页面使用。</p><div class="prompts" id="prompts"></div><form id="ask"><input id="question" aria-label="自定义问题" placeholder="输入你想问的问题" maxlength="500" required><button>前往问答</button></form><p class="result" id="answer" aria-live="polite" hidden></p><a id="ai-link" target="_blank" rel="noopener" href="./ai/">打开 AI 问答 ↗</a></section>
 </div>
 </div></main>
 <script src="data.js"></script>
@@ -199,7 +199,7 @@ function renderCosts() {
   $('bars').innerHTML = entries.map(({key,label,cost})=>'<div class="barrow"><span>'+label+'</span><div class="track"><div class="fill '+(key==='local_search'?'local':'')+'" style="width:'+100*cost/max+'%"></div></div><span class="amount">'+formatter.format(cost)+'</span></div>').join('');
   const delta = costCents(w.costs.local_search)-costCents(w.costs.balanced);
   $('cost-result').textContent = delta===0 ? '局部搜索与均衡分配的估算成本持平。' : '局部搜索的估算成本比均衡分配'+(delta<0?'低 ':'高 ')+formatter.format(Math.abs(delta)/100)+'。';
-  const link = new URL('https://multi-depot-vehicle-allocation-q5pvak8radnex77ftefspu.streamlit.app/');
+  const link = new URL('./ai/', document.baseURI);
   link.search = new URLSearchParams({instance:dataset.value,window:windowPicker.value});
   $('ai-link').href = link.href;
   const best = Math.min(...entries.map(row=>costCents(row.cost)));
