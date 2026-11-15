@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 import streamlit as st
 
@@ -21,10 +23,95 @@ def load_results():
     }
 
 
+def render_ai_analysis(instance, report, window, validation):
+    st.subheader("AI 辅助分析")
+    st.caption("DeepSeek 根据所选数据和验证窗口解释结果。问题与相关作业数据会发送给 DeepSeek。")
+
+    try:
+        api_key = str(st.secrets.get("DEEPSEEK_API_KEY", "")).strip()
+    except FileNotFoundError:
+        api_key = ""
+
+    if not api_key:
+        st.info("请在 Streamlit 的 App settings → Secrets 中配置 DEEPSEEK_API_KEY。")
+
+    with st.form(key=f"analysis_{instance}_{window}"):
+        question = st.text_area(
+            "关于当前结果，你想了解什么？",
+            placeholder="局部搜索比均衡分配省了多少？两者的估算成本分别是多少？",
+            max_chars=500,
+            disabled=not api_key,
+        )
+        submitted = st.form_submit_button("问 DeepSeek", disabled=not api_key)
+
+    if not submitted:
+        return
+    if not question.strip():
+        st.warning("请输入问题。")
+        return
+
+    costs = validation["costs"]
+    context = {
+        "数据": instance,
+        "验证窗口": window + 1,
+        "训练期数": validation["train_end_exclusive"],
+        "验证期": [period + 1 for period in validation["test_periods"]],
+        "各策略估算成本": {
+            label: round(costs[key], 2) for key, label in STRATEGIES.items()
+        },
+        "均衡分配减去局部搜索成本": round(costs["balanced"] - costs["local_search"], 2),
+        "用全历史生成的最终分配": [
+            {"仓库": depot, "车辆编号": sorted(vehicles), "总载重": report["capacities"][depot]}
+            for depot, vehicles in enumerate(report["allocation"])
+        ],
+        "问题": question.strip(),
+    }
+    payload = {
+        "model": "deepseek-flash",
+        "thinking": {"type": "disabled"},
+        "max_tokens": 450,
+        "messages": [
+            {"role": "system", "content": (
+                "你是车辆分配课程作业的分析助手。用简体中文简短解释给定的数据，准确引用数字。"
+                "验证窗口的成本是独立训练方案的估算值，最终分配来自全历史。"
+                "资料缺少逐仓库成本或分车的具体原因时，明确说明数据不足，禁止编造。"
+                "仅回答本作业结果和算法相关的问题。"
+            )},
+            {"role": "user", "content": json.dumps(context, ensure_ascii=False)},
+        ],
+    }
+    request = Request(
+        "https://api.deepseek.com/chat/completions",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        method="POST",
+    )
+    with st.spinner("正在分析当前结果…"):
+        try:
+            with urlopen(request, timeout=30) as response:
+                answer = json.load(response)["choices"][0]["message"]["content"]
+        except HTTPError as error:
+            messages = {
+                401: "DeepSeek 拒绝了密钥，请检查 Streamlit Secrets 中的值。",
+                402: "DeepSeek API 余额不足，请查看开放平台的余额。",
+                429: "DeepSeek 调用过于频繁，请稍后再试。",
+            }
+            st.error(messages.get(error.code, f"DeepSeek 请求失败（HTTP {error.code}），请稍后重试。"))
+            return
+        except (OSError, ValueError, KeyError, IndexError, TypeError):
+            st.error("暂时无法取得 DeepSeek 的回复，请稍后重试。")
+            return
+
+    if isinstance(answer, str) and answer.strip():
+        st.text(answer.strip())
+    else:
+        st.info("本次未返回分析内容，可以换个问题再试。")
+
+
 def main():
     st.set_page_config(page_title="编程作业1 · 结果分析", page_icon="🚚")
     st.title("多仓库车辆分配 · 结果分析")
-    st.caption("查看求解器生成的车辆分配和滚动验证成本。自由问答待接入模型。")
+    st.caption("查看求解器生成的车辆分配和滚动验证成本。")
 
     results = load_results()
     if not results:
@@ -61,6 +148,7 @@ def main():
         direction = "低" if difference < 0 else "高"
         st.info(f"当前窗口的局部搜索成本比均衡分配{direction} {abs(difference):,.2f}。")
     st.caption("车辆表采用全历史生成的最终分配。成本表来自各验证窗口独立训练的方案。")
+    render_ai_analysis(instance, report, window, validation)
 
 
 if __name__ == "__main__":
