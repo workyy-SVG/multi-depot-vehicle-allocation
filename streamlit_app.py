@@ -31,6 +31,18 @@ def load_results():
     }
 
 
+def cost_summary(validation):
+    scores = validation["costs"]
+    rounded = {label: round(scores[key], 2) for key, label in STRATEGIES.items()}
+    ordered = sorted(rounded.items(), key=lambda item: item[1])
+    ranking = []
+    for position, (label, cost) in enumerate(ordered, start=1):
+        rank = ranking[-1]["名次"] if ranking and cost == ranking[-1]["估算成本"] else position
+        ranking.append({"名次": rank, "分配策略": label, "估算成本": cost})
+    difference = round(rounded["局部搜索"] - rounded["均衡分配"], 2)
+    return ranking, difference
+
+
 def render_ai_analysis(instance, report, window, validation):
     st.subheader("AI 辅助分析")
     st.caption("DeepSeek 根据所选数据和验证窗口解释结果。问题与相关作业数据会发送给 DeepSeek。")
@@ -69,16 +81,17 @@ def render_ai_analysis(instance, report, window, validation):
         return
 
     st.text(f"问题：{question}")
-    costs = validation["costs"]
+    ranking, difference = cost_summary(validation)
+    with st.expander("核对本次回答使用的数据", expanded=True):
+        st.table(ranking)
+        st.write(f"局部搜索成本减去均衡分配成本为 {difference:+,.2f}。")
     context = {
         "数据": instance,
         "验证窗口": window + 1,
         "训练期数": validation["train_end_exclusive"],
         "验证期": [period + 1 for period in validation["test_periods"]],
-        "各策略估算成本": {
-            label: round(costs[key], 2) for key, label in STRATEGIES.items()
-        },
-        "均衡分配减去局部搜索成本": round(costs["balanced"] - costs["local_search"], 2),
+        "程序计算的成本排名": ranking,
+        "局部搜索减去均衡分配成本": difference,
         "用全历史生成的最终分配": [
             {"仓库": depot, "车辆编号": sorted(vehicles), "总载重": report["capacities"][depot]}
             for depot, vehicles in enumerate(report["allocation"])
@@ -93,6 +106,7 @@ def render_ai_analysis(instance, report, window, validation):
             {"role": "system", "content": (
                 "你是车辆分配课程作业的分析助手。用简体中文简短解释给定的数据，准确引用数字。"
                 "验证窗口的成本是独立训练方案的估算值，最终分配来自全历史。"
+                "成本排名按显示到小数点后两位的数值计算，名次相同表示并列。"
                 "资料缺少逐仓库成本或分车的具体原因时，明确说明数据不足，禁止编造。"
                 "仅回答本作业结果和算法相关的问题。"
             )},
@@ -137,8 +151,14 @@ def main():
         st.error("未找到作业结果文件，请检查仓库中的编程作业1/output 目录。")
         st.stop()
 
-    instance = st.selectbox("选择测试数据", list(results))
+    names = list(results)
+    requested_instance = st.query_params.get("instance")
+    initial_instance = names.index(requested_instance) if requested_instance in results else 0
+    instance = st.selectbox("选择测试数据", names, index=initial_instance)
     report = results[instance]
+    extra = report.get("ignored_trailing_records", 0)
+    if extra:
+        st.warning(f"原始输入比文件头多出 {extra} 行客户记录。当前按文件头读取，额外记录的归属待课程方确认。")
 
     st.subheader("最终车辆分配")
     st.table([
@@ -148,7 +168,10 @@ def main():
     ])
 
     windows = report["rolling_validation"]
-    window = st.selectbox("选择验证窗口", range(len(windows)),
+    requested_window = st.query_params.get("window", "")
+    window_indices = list(range(len(windows)))
+    initial_window = next((i for i in window_indices if str(i) == requested_window), 0)
+    window = st.selectbox("选择验证窗口", window_indices, index=initial_window,
                           format_func=lambda i: f"窗口 {i + 1}")
     validation = windows[window]
     periods = "、".join(str(period + 1) for period in validation["test_periods"])
