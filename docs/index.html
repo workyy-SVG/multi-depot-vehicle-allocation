@@ -140,6 +140,10 @@ figcaption strong{display:block;margin-bottom:3px}
 .map-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .map-heading button{border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--bg);font-size:13px}
 .map-heading button:disabled{opacity:.6;cursor:default}
+.warehouse-analysis{margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:9px;background:#f7fbf9}
+.warehouse-analysis h3{margin:0 0 5px;font-size:16px}
+.warehouse-analysis iframe{width:100%;height:220px;border:1px solid var(--line);border-radius:7px;margin-top:8px;background:white}
+.warehouse-analysis .table-wrap{margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -159,7 +163,14 @@ figcaption strong{display:block;margin-bottom:3px}
 <div class="legend" id="depots"></div>
 <div class="map-pair">
 <div class="map-pane"><div class="map-heading"><h3 id="global-map-title">全局位置</h3><button id="reset-map" type="button" disabled>返回全局</button></div><p class="muted" id="global-map-hint">点击图中的仓库方块放大。</p><canvas id="map" role="img" aria-label="所有仓库和客户的全局位置"></canvas></div>
-<div class="map-pane"><h3 id="local-title"></h3><p id="local-meta" class="muted map-detail-meta"></p><canvas id="local-map" role="img" aria-label="所选仓库的客户位置局部放大"></canvas></div>
+<div class="map-pane"><h3 id="local-title"></h3><p id="local-meta" class="muted map-detail-meta"></p><canvas id="local-map" role="img" aria-label="所选仓库的客户位置局部放大"></canvas>
+<section class="warehouse-analysis" aria-label="仓库对比">
+<h3 id="warehouse-comparison-title">仓库 0 · 对比基准</h3>
+<p class="muted" id="warehouse-comparison-note" aria-live="polite">点选其他仓库，即可比较客户数、车辆数和总载重，并查看 DeepSeek 解读。</p>
+<div class="table-wrap" id="warehouse-comparison-table" hidden></div>
+<iframe id="warehouse-ai" title="DeepSeek 仓库对比解读" hidden></iframe>
+<a id="warehouse-ai-link" target="_blank" rel="noopener" hidden>在新标签页打开 AI 解读 ↗</a>
+</section></div>
 </div>
 <figcaption><strong>位置与分配</strong><span id="map-explanation"></span></figcaption>
 </figure>
@@ -515,8 +526,43 @@ function renderMapExplanation() {
   $('local-title').textContent = '仓库 ' + focus + ' · 局部放大';
   $('local-meta').textContent = integer.format(count) + ' 个客户 · 局部图单独缩放';
   localCanvas.setAttribute('aria-label', '仓库 ' + focus + ' 和 ' + count + ' 个客户的坐标');
+  renderWarehouseComparison(groups);
   $('map-explanation').textContent = '仓库 ' + focus + ' 负责 ' + integer.format(count) +
     ' 个客户，共分到 ' + row.count + ' 辆车，总载重 ' + integer.format(row.capacity) + '。';
+}
+
+function renderWarehouseComparison(groups) {
+  const title = $('warehouse-comparison-title');
+  const note = $('warehouse-comparison-note');
+  const table = $('warehouse-comparison-table');
+  const frame = $('warehouse-ai');
+  const link = $('warehouse-ai-link');
+  const comparing = focus !== 0;
+  title.textContent = comparing ? '仓库 ' + focus + ' 与仓库 0' : '仓库 0 · 对比基准';
+  note.textContent = comparing ? '差值为所选仓库减去仓库 0。' :
+    '点选其他仓库，即可比较客户数、车辆数和总载重，并查看 DeepSeek 解读。';
+  table.hidden = frame.hidden = link.hidden = !comparing;
+  if (!comparing) {
+    frame.removeAttribute('src');
+    return;
+  }
+
+  const fleet = fleetRows();
+  const rows = [
+    ['客户数', groups[focus].length, groups[0].length],
+    ['车辆数', fleet[focus].count, fleet[0].count],
+    ['总载重', fleet[focus].capacity, fleet[0].capacity],
+  ];
+  table.innerHTML = '<table><thead><tr><th scope="col">指标</th><th scope="col">仓库 '+focus+
+    '</th><th scope="col">仓库 0</th><th scope="col">差值</th></tr></thead><tbody>'+
+    rows.map(([label, value, base])=>'<tr><th scope="row">'+label+'</th><td>'+integer.format(value)+
+      '</td><td>'+integer.format(base)+'</td><td>'+(value>base?'+':'')+integer.format(value-base)+'</td></tr>').join('')+
+    '</tbody></table>';
+  const url = new URL('https://multi-depot-vehicle-allocation-q5pvak8radnex77ftefspu.streamlit.app/');
+  url.search = new URLSearchParams({view:'warehouse', instance:dataset.value, depot:String(focus)});
+  link.href = url.href;
+  url.searchParams.set('embed', 'true');
+  if (frame.getAttribute('src') !== url.href) frame.src = url.href;
 }
 
 function renderCapacity() {
