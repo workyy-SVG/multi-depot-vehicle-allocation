@@ -1,25 +1,294 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>编程作业1 · 多仓库车辆分配</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>编程作业 1 · 答辩演示</title>
 <style>
-:root{font-family:system-ui,sans-serif;color:#19283e;background:#f0f4f8;color-scheme:light}
-*{box-sizing:border-box}body{margin:0}header{background:#142c48;color:#fff;padding:36px max(5vw,20px)}header p{color:#cbdced;margin:0}h1{font-size:clamp(24px,4vw,40px);margin:8px 0 12px}
-main{width:min(1160px,92%);margin:24px auto 40px}.controls,.summary{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px;align-items:center}select{font:inherit;padding:9px;border:1px solid #9daec1;border-radius:7px;background:white;color:inherit}
-.summary span{background:#e0ecf9;padding:8px 12px;border-radius:6px}.grid{display:grid;grid-template-columns:1.15fr 1fr;gap:16px}section{background:white;padding:18px;border:1px solid #d6e0eb;border-radius:12px;min-width:0}h2{font-size:19px;margin:0 0 12px}canvas{display:block;width:100%;height:365px;background:#f8fafc;border-radius:8px}small,.note{color:#475a70}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;border-bottom:1px solid #e0e7ef;padding:9px 5px}td:last-child{overflow-wrap:anywhere}button{font:inherit;cursor:pointer;border:1px solid #b5c5d7;background:white;color:inherit;padding:5px 8px;border-radius:6px}button[aria-pressed=true]{background:#dcecfb;border-color:#386893}.cost{margin-top:16px}.row{display:grid;grid-template-columns:100px minmax(30px,1fr) 85px;align-items:center;gap:10px;margin:9px 0}.track{background:#edf2f8;border-radius:4px;overflow:hidden}.bar{height:13px;background:#738ba7}.selected{background:#007c72}.value{text-align:right;font-variant-numeric:tabular-nums}@media(max-width:740px){.grid{grid-template-columns:1fr}canvas{height:300px}}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.55 "Instrument Sans","Microsoft YaHei",sans-serif;background:#eef3f1;color:#172824}
+button,select,input{font:inherit;color:inherit}
+button,select{cursor:pointer}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--accent,#087b66);outline-offset:3px}
+h1,h2,p{margin:0}
+body{display:grid;grid-template-columns:clamp(156px,16vw,206px) minmax(0,1fr);align-items:start}
+.preview{position:sticky;top:0;min-height:100vh;background:#162822;color:#fff;padding:25px 16px;display:grid;align-content:start;gap:15px}
+.preview strong{font-size:15px}
+.tabs{display:grid;gap:7px}
+.tabs button{display:flex;align-items:center;gap:9px;background:transparent;border:1px solid #759187;color:#f4fbf7;border-radius:7px;padding:8px 10px;text-align:left}
+.tabs button[aria-pressed=true]{background:#daf6e9;color:#162822;border-color:#daf6e9}
+.layout-letter{display:inline-grid;place-items:center;min-width:23px;height:23px;border-radius:4px;background:#ffffff15;font-weight:700}
+.tabs button[aria-pressed=true] .layout-letter{background:#162822;color:#fff}
+@media(max-width:560px){
+body{grid-template-columns:52px minmax(0,1fr)}
+.preview{padding:14px 6px;gap:10px}
+.preview strong{font-size:11px;text-align:center}
+.tabs button{justify-content:center;padding:6px 0}
+.layout-name{display:none}
+}
+#project{--bg:#edf3f1;--panel:#fff;--line:#d8e5df;--ink:#172824;--muted:#4b655d;--accent:#087b66;--hero:#dcece6;min-height:100vh;background:var(--bg);color:var(--ink)}
+.shell{width:min(1320px,94%);margin:auto;display:grid;gap:16px;padding:26px 0 42px}
+.hero{padding:30px 34px;background:var(--hero);border:1px solid var(--line);border-radius:16px;position:relative}
+.hero h1{font-size:clamp(24px,3.7vw,48px);letter-spacing:-.035em;line-height:1.2;margin:8px 0 12px}
+.kicker{color:var(--accent);font-weight:700;font-size:13px}
+.subtitle,.muted{color:var(--muted);font-size:13px}
+.stats{display:flex;flex-wrap:wrap;gap:14px;margin-top:22px}
+.stat{display:flex;align-items:baseline;gap:8px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel)}
+.stat b{font-size:20px;font-variant-numeric:tabular-nums}
+.controls,.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+.controls{display:flex;flex-wrap:wrap;align-content:start;gap:12px}
+.field{display:grid;gap:4px;flex:1;min-width:140px;font-size:13px;font-weight:650}
+select,input{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:8px;min-width:0;width:100%}
+.grid{display:grid;gap:16px;grid-template-areas:"map map fleet" "map map cost" "ai ai ai";grid-template-columns:repeat(3,minmax(0,1fr));align-items:start}
+.map{grid-area:map}.fleet{grid-area:fleet}.cost{grid-area:cost}.ai{grid-area:ai}
+.card h2{font-size:19px;margin-bottom:6px;line-height:1.3}
+canvas{display:block;width:100%;height:390px;margin-top:12px;border:1px solid var(--line);border-radius:9px}
+.table-wrap{overflow:auto;margin-top:9px}table{border-collapse:collapse;width:100%;text-align:left;font-size:13px}
+td,th{padding:7px 6px;border-bottom:1px solid var(--line)}th{white-space:nowrap;color:var(--muted)}
+.legend,.prompts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.legend button,.prompts button,form button{border:1px solid var(--line);border-radius:7px;background:var(--bg);padding:5px 9px}
+.legend button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.dot{width:.68em;height:.68em;display:inline-block;border-radius:50%;margin-right:5px}
+.barrow{display:grid;grid-template-columns:82px minmax(0,1fr) 75px;gap:7px;align-items:center;margin:9px 0;font-size:12px}
+.track{background:var(--bg);border-radius:3px;overflow:hidden}
+.fill{height:9px;background:var(--muted);border-radius:3px}
+.fill.local{background:var(--accent)}
+.amount{text-align:right;font-variant-numeric:tabular-nums}
+.result{display:block;background:var(--bg);border-left:3px solid var(--accent);padding:9px 11px;margin-top:12px;border-radius:3px;font-size:13px}
+form{display:flex;gap:8px;margin-top:12px}form input{flex:1}form button{flex:none}
+.note{width:100%;color:var(--muted);font-size:12px}
+a{color:var(--accent);font-weight:650}
+[hidden]{display:none!important}
+.shell{width:min(1390px,94%)}
+.hero{padding:24px 28px}
+.hero h1{font-size:clamp(24px,3.1vw,42px)}
+.stats{margin-top:15px}
+.controls{padding:13px 16px}
+.field{max-width:310px}
+.grid{grid-template-columns:minmax(0,1.75fr) minmax(275px,1fr);grid-template-areas:"map overview"}
+#project[data-view=fleet] .grid{grid-template-areas:"map fleet"}
+#project[data-view=cost] .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"cost"}
+#project[data-view=ai] .grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"ai"}
+.overview{grid-area:overview}
+.overview dl{margin:10px 0 18px}
+.overview dt{font-weight:700;margin-top:13px}
+.overview dd{margin:3px 0 0;color:var(--muted)}
+.overview button{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:8px 14px}
+canvas{height:clamp(315px,47vh,525px)}
+tr[data-focused=true]{background:var(--hero)}
+.cost .barrow{grid-template-columns:104px minmax(0,1fr) 92px;font-size:14px;margin:14px 0}
+.cost .fill{height:14px}
+.ai a{display:inline-block;margin-top:13px}
+@media(max-width:1030px){
+#project[data-view=overview] .grid{grid-template-columns:1fr;grid-template-areas:"map" "overview"}
+#project[data-view=fleet] .grid{grid-template-columns:1fr;grid-template-areas:"map" "fleet"}
+}
+@media(max-width:590px){
+.hero,.card{padding:14px}
+canvas{height:280px}
+.cost .barrow{grid-template-columns:78px minmax(0,1fr) 68px;font-size:12px}
+form{flex-wrap:wrap}
+}
 </style>
-<script defer src="data.js"></script><script defer src="app.js"></script>
 </head>
 <body>
-<header><p>算法设计课程 · 编程作业1</p><h1>多周期需求下的多仓库车辆分配</h1><p>比较分车策略，查看仓库、客户和车辆的分配结果。</p></header>
-<main>
-<div class="controls"><label for="instance">测试实例</label><select id="instance"></select></div>
-<div class="summary" id="summary" aria-live="polite"></div>
-<div class="grid">
-<section><h2>仓库与客户位置</h2><canvas id="map" role="img" aria-label="平面坐标图，方块表示仓库，圆点表示客户。"></canvas><p class="note">方块是仓库，圆点是客户。点击右侧仓库编号可突出显示其负责的客户。</p></section>
-<section><h2>最终车辆分配</h2><table><thead><tr><th>仓库</th><th>车辆数</th><th>总载重</th><th>车辆编号（载重）</th></tr></thead><tbody id="fleet"></tbody></table><p class="note" id="data-note"></p></section>
+<aside class="preview"><strong>答辩导航</strong><nav class="tabs" aria-label="答辩导航"><button type="button" data-view="overview" aria-pressed="true" aria-label="项目概览" title="项目概览"><span class="layout-letter" aria-hidden="true">概</span><span class="layout-name">项目概览</span></button><button type="button" data-view="fleet" aria-pressed="false" aria-label="车辆分配" title="车辆分配"><span class="layout-letter" aria-hidden="true">车</span><span class="layout-name">车辆分配</span></button><button type="button" data-view="cost" aria-pressed="false" aria-label="策略对比" title="策略对比"><span class="layout-letter" aria-hidden="true">比</span><span class="layout-name">策略对比</span></button><button type="button" data-view="ai" aria-pressed="false" aria-label="AI 辅助分析" title="AI 辅助分析"><span class="layout-letter" aria-hidden="true">AI</span><span class="layout-name">AI 辅助分析</span></button></nav></aside>
+<main id="project" data-view="overview"><div class="shell">
+<header class="hero"><p class="kicker">算法设计课程 · 编程作业 1</p><h1>多周期需求下的多仓库车辆分配</h1><p class="subtitle">根据历史需求和配送成本，决定每辆车分配到哪个仓库。</p><div class="stats" id="stats"></div></header>
+<div class="controls">
+<label class="field">测试实例<select id="instance"></select></label>
+<label class="field" id="window-field" hidden>验证窗口<select id="window"></select></label>
+<p class="note" id="warning" hidden></p>
 </div>
-<section class="cost"><h2>滚动验证成本</h2><label for="window">验证窗口</label> <select id="window"></select><p class="note" id="periods"></p><div id="costs" aria-live="polite"></div><p id="comparison"></p><p><a id="ai-link" href="https://multi-depot-vehicle-allocation-q5pvak8radnex77ftefspu.streamlit.app/">打开 AI 辅助分析 →</a></p><small>成本为行驶距离与未服务罚分之和，越低越好。每个窗口使用该窗口之前的历史生成方案，图表展示本地验证估算。上方车辆表展示最终提交方案。</small></section>
-</main>
-</body></html>
+<div class="grid">
+<section class="card map"><h2>仓库和客户位置</h2><p class="muted">方块表示仓库，圆点表示客户。点击仓库编号查看分车。</p><canvas id="map" role="img" aria-label="仓库和客户坐标分布"></canvas><div class="legend" id="depots"></div></section>
+<section class="card overview" data-section="overview">
+<h2>项目要解决什么</h2>
+<dl><dt>输入</dt><dd>客户位置、历史订单量、仓库位置与车辆载重。</dd><dt>目标</dt><dd>提前分配车辆，降低估算配送成本。</dd><dt>算法</dt><dd>构造多种初始分配，再尝试跨仓库移动和交换车辆。</dd><dt>输出与验证</dt><dd>输出每个仓库的车辆清单，在后续验证期比较配送距离和未服务罚分。</dd></dl>
+<button id="show-fleet" type="button">查看车辆分配 →</button>
+</section>
+<section class="card fleet" data-section="fleet" hidden><h2>最终车辆分配</h2><p class="muted">根据全部历史生成</p><div class="table-wrap"><table><thead><tr><th>仓库</th><th>车辆数</th><th>总载重</th><th>车辆编号</th></tr></thead><tbody id="fleet"></tbody></table></div></section>
+<section class="card cost" data-section="cost" hidden><h2>各策略的验证成本</h2><p class="muted" id="periods"></p><div id="bars"></div><p class="result" id="cost-result"></p></section>
+<section class="card ai" data-section="ai" hidden><h2>AI 辅助分析</h2><p class="muted">本地预览使用作业数据演示推荐问题。自由问答可在现有 Streamlit 页面使用。</p><div class="prompts" id="prompts"></div><form id="ask"><input id="question" aria-label="自定义问题" placeholder="输入你想问的问题" maxlength="500" required><button>前往问答</button></form><p class="result" id="answer" aria-live="polite" hidden></p><a id="ai-link" target="_blank" rel="noopener" href="https://multi-depot-vehicle-allocation-q5pvak8radnex77ftefspu.streamlit.app/">打开现有问答页 ↗</a></section>
+</div>
+</div></main>
+<script src="data.js"></script>
+<script>
+const $ = (id) => document.getElementById(id);
+const project = $('project');
+const dataset = $('instance');
+const windowPicker = $('window');
+const canvas = $('map');
+const palettes = {
+  light:['#087b66','#1d5f9e','#ae562b','#733fa0','#8c6a01'],
+  dark:['#70ead0','#82bcff','#ffa877','#d4afff','#f4d368']
+};
+const formatter = new Intl.NumberFormat('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const integer = new Intl.NumberFormat('zh-CN');
+const labels = {balanced:'均衡分配',mean:'平均需求',risk:'需求与波动',trend:'趋势场景',local_search:'局部搜索'};
+const questions = [
+  '哪种策略成本最低？','局部搜索相差多少？','五种策略如何排名？',
+  '哪个仓库车辆最多？','哪个仓库总载重最高？','用了哪些验证期？'
+];
+let focus = -1;
+let activeQuestion = null;
+const record = () => instances[dataset.value];
+const currentWindow = () => record().windows[Number(windowPicker.value)];
+const colors = () => palettes.light;
+const costCents = (cost) => Math.round(cost * 100);
+const fleetRows = () => record().allocation.map((ids, depot) => ({
+  depot, ids:[...ids].sort((a,b)=>a-b), count:ids.length,
+  capacity:ids.reduce((total,id)=>total+record().caps[id],0)
+}));
+
+function drawMap() {
+  const {depots,groups} = record();
+  const points = [...depots,...groups.flat()];
+  const bounds = [0,1].map(i => {
+    const values = points.map(p => p[i]);
+    return [Math.min(...values),Math.max(...values)];
+  });
+  const width = canvas.clientWidth, height = canvas.clientHeight;
+  if (!width || !height) return;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.round(width*ratio);
+  canvas.height = Math.round(height*ratio);
+  const ctx = canvas.getContext('2d');
+  ctx.scale(ratio,ratio);
+  const style = getComputedStyle(project);
+  ctx.fillStyle = style.getPropertyValue('--bg');
+  ctx.fillRect(0,0,width,height);
+  ctx.strokeStyle = style.getPropertyValue('--line');
+  for (let x=25;x<width;x+=32) {
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,height);ctx.stroke();
+  }
+  for (let y=25;y<height;y+=32) {
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(width,y);ctx.stroke();
+  }
+  const [[x0,x1],[y0,y1]] = bounds;
+  const scale = Math.min((width-48)/Math.max(x1-x0,1),(height-48)/Math.max(y1-y0,1));
+  const projectPoint = ([x,y]) => [width/2+(x-(x0+x1)/2)*scale,height/2-(y-(y0+y1)/2)*scale];
+  groups.forEach((group,d) => {
+    ctx.globalAlpha = focus===-1 || d===focus ? .67 : .12;
+    ctx.fillStyle = colors()[d % colors().length];
+    group.forEach(point => {
+      const [x,y] = projectPoint(point);
+      ctx.beginPath();ctx.arc(x,y,group.length>400?1.6:2.5,0,Math.PI*2);ctx.fill();
+    });
+  });
+  depots.forEach((point,d) => {
+    const [x,y] = projectPoint(point);
+    ctx.globalAlpha = focus===-1 || d===focus ? 1 : .45;
+    ctx.fillStyle = colors()[d % colors().length];
+    ctx.fillRect(x-6,y-6,12,12);
+    ctx.font = 'bold 12px sans-serif';ctx.fillText(String(d),x+9,y-7);
+  });
+}
+
+function renderDepots() {
+  $('depots').innerHTML = record().depots.map((_,d) =>
+    '<button data-depot="'+d+'" aria-pressed="'+(focus===d)+'"><span class="dot" style="background:'+colors()[d % colors().length]+'"></span>仓库 '+d+'</button>'
+  ).join('');
+}
+
+function renderCosts() {
+  const w = currentWindow();
+  $('periods').textContent = '训练前 '+w.train_end_exclusive+' 期 · 验证第 '+w.test_periods.map(p=>p+1).join('、')+' 期';
+  const entries = Object.entries(labels).map(([key,label])=>({key,label,cost:w.costs[key]}));
+  const max = Math.max(1,...entries.map(row=>row.cost));
+  $('bars').innerHTML = entries.map(({key,label,cost})=>'<div class="barrow"><span>'+label+'</span><div class="track"><div class="fill '+(key==='local_search'?'local':'')+'" style="width:'+100*cost/max+'%"></div></div><span class="amount">'+formatter.format(cost)+'</span></div>').join('');
+  const delta = costCents(w.costs.local_search)-costCents(w.costs.balanced);
+  $('cost-result').textContent = delta===0 ? '局部搜索与均衡分配的估算成本持平。' : '局部搜索的估算成本比均衡分配'+(delta<0?'低 ':'高 ')+formatter.format(Math.abs(delta)/100)+'。';
+  const link = new URL('https://multi-depot-vehicle-allocation-q5pvak8radnex77ftefspu.streamlit.app/');
+  link.search = new URLSearchParams({instance:dataset.value,window:windowPicker.value});
+  $('ai-link').href = link.href;
+  const best = Math.min(...entries.map(row=>costCents(row.cost)));
+  const leaders = entries.filter(row=>costCents(row.cost)===best).map(row=>row.label);
+  $('cost-result').textContent += ' 最低成本 '+formatter.format(best/100)+'，'+leaders.join('、')+(leaders.length>1?'并列。':'。');
+  renderAnswer();
+}
+
+function renderAnswer() {
+  $('answer').hidden = activeQuestion===null;
+  if (activeQuestion===null) return;
+  const w = currentWindow();
+  const ranked = Object.entries(labels).map(([key,label])=>({label, cents:costCents(w.costs[key])})).sort((a,b)=>a.cents-b.cents);
+  const fleet = fleetRows();
+  const best = ranked.filter(row=>row.cents===ranked[0].cents).map(row=>row.label).join('、');
+  const maxCount = Math.max(...fleet.map(row=>row.count));
+  const maxCapacity = Math.max(...fleet.map(row=>row.capacity));
+  const winners = (key,max) => fleet.filter(row=>row[key]===max).map(row=>'仓库 '+row.depot).join('、');
+  const answers = [
+    best+'的估算成本最低，为 '+formatter.format(ranked[0].cents/100)+'。',
+    $('cost-result').textContent,
+    ranked.map(row=>row.label+' '+formatter.format(row.cents/100)).join(' · ')+'。相同成本并列。',
+    winners('count',maxCount)+'分到的车辆最多，为 '+maxCount+' 辆。',
+    winners('capacity',maxCapacity)+'的总载重最高，为 '+integer.format(maxCapacity)+'。',
+    $('periods').textContent+'。'
+  ];
+  $('answer').textContent = answers[activeQuestion];
+}
+
+function renderInstance() {
+  const d = record();
+  focus = -1;
+  activeQuestion = null;
+  windowPicker.replaceChildren(...d.windows.map((_,i)=>new Option('窗口 '+(i+1),i)));
+  $('stats').innerHTML = [[d.depots.length,'仓库'],[d.groups.reduce((n,g)=>n+g.length,0),'客户'],[d.caps.length,'车辆'],[d.periods,'历史周期']].map(([count,label])=>'<span class="stat"><b>'+integer.format(count)+'</b>'+label+'</span>').join('');
+  $('warning').hidden = !d.ignored;
+  $('warning').textContent = d.ignored ? '原始输入多出 '+d.ignored+' 行，按文件头读取。' : '';
+  $('fleet').innerHTML = fleetRows().map(row=>'<tr><td>'+row.depot+'</td><td>'+row.count+'</td><td>'+integer.format(row.capacity)+'</td><td>'+row.ids.join('、')+'</td></tr>').join('');
+  renderDepots();
+  renderCosts();
+  drawMap();
+}
+
+dataset.replaceChildren(...Object.keys(instances).map(key=>new Option(key,key)));
+dataset.value = '10_random';
+$('prompts').replaceChildren(...questions.map((question,i)=>{
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.textContent = question;
+  button.addEventListener('click',()=>{activeQuestion=i;renderAnswer();});
+  return button;
+}));
+const navButtons = [...document.querySelectorAll('.tabs button')];
+function showView(view) {
+  project.dataset.view = view;
+  navButtons.forEach(button=>button.setAttribute('aria-pressed',button.dataset.view===view));
+  document.querySelector('.map').hidden = view!=='overview' && view!=='fleet';
+  document.querySelectorAll('[data-section]').forEach(section=>section.hidden=section.dataset.section!==view);
+  $('window-field').hidden = view!=='cost' && view!=='ai';
+  drawMap();
+}
+for (const button of navButtons) {
+  button.addEventListener('click',()=>showView(button.dataset.view));
+}
+$('show-fleet').addEventListener('click',()=>showView('fleet'));
+$('depots').addEventListener('click',event=>{
+  const button = event.target.closest('[data-depot]');
+  if (!button) return;
+  const depot = Number(button.dataset.depot);
+  focus = focus===depot ? -1 : depot;
+  Array.from($('depots').children).forEach((element,index)=>element.setAttribute('aria-pressed',focus===index));
+  showView('fleet');
+  highlightFleet();
+});
+function highlightFleet() {
+  [...$('fleet').rows].forEach((row,index)=>row.dataset.focused=String(index===focus));
+}
+dataset.addEventListener('change',renderInstance);
+windowPicker.addEventListener('change',renderCosts);
+$('ask').addEventListener('submit',event=>{
+  event.preventDefault();
+  const target = new URL($('ai-link').href);
+  window.open(target.href,'_blank','noopener');
+  activeQuestion=null;
+  $('answer').hidden=false;
+  $('answer').textContent='已打开现有问答页。请在问答框中输入：'+$('question').value.trim();
+});
+new ResizeObserver(drawMap).observe(canvas);
+renderInstance();
+</script>
+</body>
+</html>
