@@ -89,6 +89,23 @@ canvas{height:280px}
 .cost .barrow{grid-template-columns:78px minmax(0,1fr) 68px;font-size:12px}
 form{flex-wrap:wrap}
 }
+figure{margin:0}
+figcaption{background:#edf6f1;border-left:3px solid #087b66;padding:12px 14px;margin-top:13px;border-radius:4px;color:#29483e;font-size:14px}
+figcaption strong{display:block;margin-bottom:3px}
+.flow-list{list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px;padding:0;margin:12px 0}
+.flow-list li{background:#edf6f1;border:1px solid #cee1d7;border-radius:7px;padding:10px;font-weight:650}
+.flow-list small{display:block;color:#49655b;font-weight:400;margin-top:3px}
+.capacity-charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-top:12px}
+.capacity-charts .barrow{grid-template-columns:48px minmax(0,1fr) 50px}
+.capacity-charts h3{font-size:14px;margin:0}
+.heat{margin-top:22px;border-top:1px solid var(--line);padding-top:19px}
+.heat table{max-width:720px}
+.heat button{border:1px solid transparent;border-radius:6px;padding:4px 8px;width:100%;text-align:center;background:#eef2f6;color:#324457}
+.heat button[data-sign=lower]{background:#d5efe0;color:#164535}
+.heat button[data-sign=higher]{background:#f9e2d9;color:#782e24}
+.heat button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.heat .table-wrap{margin-bottom:8px}
+.fleet figure{margin-top:18px}
 </style>
 </head>
 <body>
@@ -101,15 +118,31 @@ form{flex-wrap:wrap}
 <p class="note" id="warning" hidden></p>
 </div>
 <div class="grid">
-<section class="card map"><h2>仓库和客户位置</h2><p class="muted">方块表示仓库，圆点表示客户。点击仓库编号查看分车。</p><canvas id="map" role="img" aria-label="仓库和客户坐标分布"></canvas><div class="legend" id="depots"></div></section>
+<section class="card map"><h2>仓库和客户位置</h2><p class="muted">方块表示仓库，圆点表示客户。点击仓库编号查看分车。</p><figure><canvas id="map" role="img" aria-label="仓库和客户坐标分布"></canvas><div class="legend" id="depots"></div><figcaption><strong>读图提示</strong><span id="map-explanation"></span></figcaption></figure></section>
 <section class="card overview" data-section="overview">
 <h2>项目要解决什么</h2>
 <dl><dt>输入</dt><dd>客户位置、历史订单量、仓库位置与车辆载重。</dd><dt>目标</dt><dd>提前分配车辆，降低估算配送成本。</dd><dt>算法</dt><dd>构造多种初始分配，再尝试跨仓库移动和交换车辆。</dd><dt>输出与验证</dt><dd>输出每个仓库的车辆清单，在后续验证期比较配送距离和未服务罚分。</dd></dl>
-<button id="show-fleet" type="button">查看车辆分配 →</button>
+<figure>
+<h2>算法流程</h2>
+<ol class="flow-list">
+<li>读取历史需求<small>识别仓库、客户和车辆载重</small></li>
+<li>生成初始分配<small>均衡、均值、波动和趋势</small></li>
+<li>移动或交换车辆<small>按训练期估算成本筛选</small></li>
+<li>验证分配策略<small>在后续周期比较成本</small></li>
+</ol>
+<figcaption><strong>怎么理解这个流程</strong>每个验证窗口先用较早的历史生成方案，再用后续周期检查效果。最终车辆清单以全部历史为取样范围。</figcaption>
+</figure>
+<button style="margin-top:14px" id="show-fleet" type="button">查看车辆分配 →</button>
 </section>
-<section class="card fleet" data-section="fleet" hidden><h2>最终车辆分配</h2><p class="muted">根据全部历史生成</p><div class="table-wrap"><table><thead><tr><th>仓库</th><th>车辆数</th><th>总载重</th><th>车辆编号</th></tr></thead><tbody id="fleet"></tbody></table></div></section>
-<section class="card cost" data-section="cost" hidden><h2>各策略的验证成本</h2><p class="muted" id="periods"></p><div id="bars"></div><p class="result" id="cost-result"></p></section>
-<section class="card ai" data-section="ai" hidden><h2>AI 辅助分析</h2><p class="muted">本地预览使用作业数据演示推荐问题。自由问答可在现有 Streamlit 页面使用。</p><div class="prompts" id="prompts"></div><form id="ask"><input id="question" aria-label="自定义问题" placeholder="输入你想问的问题" maxlength="500" required><button>前往问答</button></form><p class="result" id="answer" aria-live="polite" hidden></p><a id="ai-link" target="_blank" rel="noopener" href="./ai/">打开 AI 问答 ↗</a></section>
+<section class="card fleet" data-section="fleet" hidden><h2>最终车辆分配</h2><p class="muted">根据全部历史生成</p><div class="table-wrap"><table><thead><tr><th>仓库</th><th>车辆数</th><th>总载重</th><th>车辆编号</th></tr></thead><tbody id="fleet"></tbody></table></div>
+<figure><h2>各仓库的车辆数和总载重</h2><div class="capacity-charts" id="capacity-charts"></div>
+<figcaption><strong>数量和运力怎么看</strong><span id="capacity-explanation"></span></figcaption></figure></section>
+<section class="card cost" data-section="cost" hidden><h2>各策略的验证成本</h2><p class="muted" id="periods"></p><figure><div id="bars"></div><figcaption><strong>当前窗口的结果</strong><span id="cost-result"></span></figcaption></figure>
+<figure class="heat"><h2>18 个验证窗口的成本差异</h2>
+<p class="muted">局部搜索相对均衡分配的成本变化。↓ 表示更省，＝表示持平，↑ 表示更贵。点击格子查看对应成本图。</p>
+<div class="table-wrap"><table><thead><tr><th scope="col">测试实例</th><th scope="col">窗口 1</th><th scope="col">窗口 2</th></tr></thead><tbody id="heat-body"></tbody></table></div>
+<figcaption><strong>整体结果与例外</strong><span id="heat-explanation"></span></figcaption></figure></section>
+<section class="card ai" data-section="ai" hidden><h2>AI 辅助分析</h2><p class="muted">本地预览使用作业数据演示推荐问题。自由问答可在现有 Streamlit 页面使用。</p><div class="prompts" id="prompts"></div><form id="ask"><input id="question" aria-label="自定义问题" placeholder="输入你想问的问题" maxlength="500" required><button>前往问答</button></form><p class="result" id="answer" aria-live="polite" hidden></p><a id="ai-link" target="_blank" rel="noopener" href="https://workyy-svg.github.io/multi-depot-vehicle-allocation/ai/">打开现有问答页 ↗</a></section>
 </div>
 </div></main>
 <script src="data.js"></script>
@@ -199,12 +232,13 @@ function renderCosts() {
   $('bars').innerHTML = entries.map(({key,label,cost})=>'<div class="barrow"><span>'+label+'</span><div class="track"><div class="fill '+(key==='local_search'?'local':'')+'" style="width:'+100*cost/max+'%"></div></div><span class="amount">'+formatter.format(cost)+'</span></div>').join('');
   const delta = costCents(w.costs.local_search)-costCents(w.costs.balanced);
   $('cost-result').textContent = delta===0 ? '局部搜索与均衡分配的估算成本持平。' : '局部搜索的估算成本比均衡分配'+(delta<0?'低 ':'高 ')+formatter.format(Math.abs(delta)/100)+'。';
-  const link = new URL('./ai/', document.baseURI);
+  const link = new URL('https://workyy-svg.github.io/multi-depot-vehicle-allocation/ai/');
   link.search = new URLSearchParams({instance:dataset.value,window:windowPicker.value});
   $('ai-link').href = link.href;
   const best = Math.min(...entries.map(row=>costCents(row.cost)));
   const leaders = entries.filter(row=>costCents(row.cost)===best).map(row=>row.label);
   $('cost-result').textContent += ' 最低成本 '+formatter.format(best/100)+'，'+leaders.join('、')+(leaders.length>1?'并列。':'。');
+  renderHeat();
   renderAnswer();
 }
 
@@ -239,6 +273,8 @@ function renderInstance() {
   $('warning').textContent = d.ignored ? '原始输入多出 '+d.ignored+' 行，按文件头读取。' : '';
   $('fleet').innerHTML = fleetRows().map(row=>'<tr><td>'+row.depot+'</td><td>'+row.count+'</td><td>'+integer.format(row.capacity)+'</td><td>'+row.ids.join('、')+'</td></tr>').join('');
   renderDepots();
+  renderMapExplanation();
+  renderCapacity();
   renderCosts();
   drawMap();
 }
@@ -272,6 +308,7 @@ $('depots').addEventListener('click',event=>{
   focus = focus===depot ? -1 : depot;
   Array.from($('depots').children).forEach((element,index)=>element.setAttribute('aria-pressed',focus===index));
   showView('fleet');
+  renderMapExplanation();
   highlightFleet();
 });
 function highlightFleet() {
@@ -287,6 +324,71 @@ $('ask').addEventListener('submit',event=>{
   $('answer').hidden=false;
   $('answer').textContent='已打开现有问答页。请在问答框中输入：'+$('question').value.trim();
 });
+function renderMapExplanation() {
+  const {groups} = record();
+  const count = groups.reduce((sum, group) => sum + group.length, 0);
+  if (focus >= 0) {
+    const customers = groups[focus].length;
+    const share = count ? (100 * customers / count).toFixed(1) : '0.0';
+    $('map-explanation').textContent = '仓库 '+focus+' 对应 '+integer.format(customers)+' 个客户，占当前实例的 '+share+'%。可以在车辆表中核对该仓库的分配。';
+    return;
+  }
+  const largest = Math.max(...groups.map(group => group.length));
+  const leaders = groups.flatMap((group, depot) => group.length === largest ? ['仓库 '+depot] : []);
+  $('map-explanation').textContent = '当前实例有 '+groups.length+' 个仓库、'+integer.format(count)+' 个客户。'+leaders.join('、')+(leaders.length>1?'并列':'')+'负责的客户最多，各有 '+integer.format(largest)+' 个。';
+}
+
+function renderCapacity() {
+  const fleet = fleetRows();
+  const series = [['count','车辆数（辆）'],['capacity','总载重']];
+  $('capacity-charts').innerHTML = series.map(([key,label]) => {
+    const max = Math.max(1, ...fleet.map(row => row[key]));
+    const bars = fleet.map(row => '<div class="barrow"><span>仓库 '+row.depot+'</span><div class="track"><div class="fill local" style="width:'+100*row[key]/max+'%"></div></div><span class="amount">'+integer.format(row[key])+'</span></div>').join('');
+    return '<div><h3>'+label+'</h3>'+bars+'</div>';
+  }).join('');
+  const most = key => fleet.filter(row => row[key] === Math.max(...fleet.map(item => item[key])));
+  const names = rows => rows.map(row => '仓库 '+row.depot).join('、');
+  const countLeaders = most('count'), capacityLeaders = most('capacity');
+  $('capacity-explanation').textContent = names(countLeaders)+'的车辆数最多，各有 '+countLeaders[0].count+' 辆。'+names(capacityLeaders)+'的总载重最高，各为 '+integer.format(capacityLeaders[0].capacity)+'。两张图使用各自的刻度。';
+}
+
+function windowDifference(windowData) {
+  return costCents(windowData.costs.local_search) - costCents(windowData.costs.balanced);
+}
+
+function renderHeat() {
+  const counts = {lower:0, tied:0, higher:0};
+  const exceptions = [];
+  $('heat-body').innerHTML = Object.entries(instances).map(([name,data]) => {
+    const cells = data.windows.map((w,i) => {
+      const delta = windowDifference(w);
+      const sign = delta < 0 ? 'lower' : delta > 0 ? 'higher' : 'tied';
+      const rate = w.costs.balanced ? (Math.abs(delta)/w.costs.balanced).toFixed(2)+'%' : formatter.format(Math.abs(delta)/100);
+      const label = delta < 0 ? '↓ '+rate : delta > 0 ? '↑ '+rate : '＝ 持平';
+      counts[sign]++;
+      if (delta > 0) exceptions.push(name+' 窗口 '+(i+1)+' 高 '+rate);
+      const active = name===dataset.value && i===Number(windowPicker.value);
+      return '<td><button type="button" data-case="'+name+'" data-window="'+i+'" data-sign="'+sign+'" aria-label="'+name+' 窗口 '+(i+1)+' '+label+'" aria-pressed="'+active+'">'+label+'</button></td>';
+    }).join('');
+    return '<tr><th scope="row">'+name+'</th>'+cells+'</tr>';
+  }).join('');
+  const example = exceptions.length ? '表现更差的窗口为 '+exceptions.join('、')+'。' : '';
+  $('heat-explanation').textContent = '与均衡分配相比，局部搜索在 '+counts.lower+' 个窗口更省，'+counts.tied+' 个持平，'+counts.higher+' 个更贵。'+example+'每个格子使用原答辩页为该窗口选出的三个验证期。';
+}
+
+$('heat-body').addEventListener('click', event => {
+  const button = event.target.closest('[data-case]');
+  if (!button) return;
+  const {case: instance, window: index} = button.dataset;
+  if (dataset.value !== instance) {
+    dataset.value = instance;
+    renderInstance();
+  }
+  windowPicker.value = index;
+  renderCosts();
+  $('bars').scrollIntoView({block:'nearest',behavior:'smooth'});
+});
+
 new ResizeObserver(drawMap).observe(canvas);
 renderInstance();
 </script>
