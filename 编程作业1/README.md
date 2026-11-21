@@ -21,6 +21,27 @@ python solve.py --objective getscore --score-polish --incumbent-dir score_output
 
 对比表中的 `baseline_score`、`incumbent_score` 和 `optimized_score` 分别是本轮对原方案、上一次方案和最终方案的评分。
 
+## 最优混合搜索
+
+```powershell
+python -m pip install -r requirements-score.txt
+python compare_algorithms.py --portfolio --file input_data/13_random.in --output-dir portfolio_run
+```
+
+`--portfolio` 会运行适用的候选搜索和加深试验，使用每仓 3 秒的评分比较结果，写入 `*_portfolio.out`。处理仓库自带实例时，也会复评已有的最佳分配。各方法的分数在同批生成的 CSV 中。
+
+`score_benchmark/` 包含九个可直接复评的分配及三份报告。`confirmed.csv` 记录通过附件评分函数复测的最终结果，合计 **144,394.947**，同轮发布版对照为 **146,388.474**。`method_scores.csv` 记录各方法与参数的原始测分，`strategy_summary.csv` 汇总初轮筛选，其中某方法缺席的实例使用计数动态规划、两仓枚举或束搜索分数作为对照。限时 PyVRP 求解的分数可能随机器负载和版本变化。
+
+## 单独复现实验搜索
+
+```powershell
+python compare_algorithms.py --file input_data/13_random.in --output-dir experiment
+python compare_algorithms.py --deeper --file input_data/12_random.in --output-dir experiment_deep
+python compare_algorithms.py --wide-local --file input_data/13_random.in --output-dir experiment_wide
+```
+
+实验使用相同的均值需求目标对比需求贪心、车辆数动态规划、载重组合枚举、束搜索、车队整数规划、模拟退火、遗传搜索与路线池整数规划。按实例结构选择适用的算法。候选方案先用短时限筛选，写入 CSV 的分数使用每仓 3 秒的 PyVRP 评分。`--deeper` 对同载重车队完整评估每仓可能的车辆数，或延长小规模两仓实例的枚举筛选。`--wide-local` 按仓库对扩大调拨和交换候选，然后用每仓 3 秒评分联合重组车队。实验写入指定目录，可直接用对应的 `.out` 文件复评分数。
+
 ## 运行历史模式
 
 默认求解只依赖 NumPy。在本目录执行：

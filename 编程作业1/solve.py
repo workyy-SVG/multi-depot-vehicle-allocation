@@ -102,7 +102,7 @@ def improve_order(route, dist):
     return best
 
 
-def route_pool(data, scen, mats, offsets=4):
+def route_pool(data, scen, mats, offsets=4, *, penalty_multiplier=UNSERVED_DISTANCE_MULTIPLIER):
     pools = {}; types = sorted(set(data['caps']))
     for d in range(data['D']):
         xy = data['coords'][d]-data['depots'][d]
@@ -117,7 +117,7 @@ def route_pool(data, scen, mats, offsets=4):
                 if key in found: return
                 r = improve_order(r, mats[d])
                 cost = sum(mats[d][a,b] for a,b in zip([0]+r,r+[0]))
-                saving = sum(UNSERVED_DISTANCE_MULTIPLIER*mats[d][0,i] for i in r)-cost
+                saving = sum(penalty_multiplier*mats[d][0,i] for i in r)-cost
                 if saving > 1e-8:
                     level = next(i for i,c in enumerate(types) if c >= amount)
                     found[key] = (r, level, float(saving))

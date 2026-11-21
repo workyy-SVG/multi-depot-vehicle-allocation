@@ -78,6 +78,13 @@ def fleet_neighbors(groups, capacities):
         yield (min(left, right), max(left, right)), updated
 
 
+def two_depot_allocations(cap_ids):
+    for split in product(*(range(len(ids) + 1) for ids in cap_ids.values())):
+        pairs = list(zip(cap_ids.values(), split))
+        yield [[v for ids, n in pairs for v in ids[:n]],
+               [v for ids, n in pairs for v in ids[n:]]]
+
+
 def best_allocations(evaluator, seeds, count, rounds, seconds):
     """Use depot additivity to score only new capacity multisets."""
     cap_ids = defaultdict(list)
@@ -112,10 +119,8 @@ def best_allocations(evaluator, seeds, count, rounds, seconds):
             boundaries = np.cumsum((0, *split))
             add([ids[lo:hi] for lo, hi in zip(boundaries, boundaries[1:])])
     elif num_depots == 2 and prod(len(ids) + 1 for ids in cap_ids.values()) <= 300:
-        for split in product(*(range(len(ids) + 1) for ids in cap_ids.values())):
-            pairs = list(zip(cap_ids.values(), split))
-            add([[v for ids, n in pairs for v in ids[:n]],
-                 [v for ids, n in pairs for v in ids[n:]]])
+        for allocation in two_depot_allocations(cap_ids):
+            add(allocation)
     else:
         beam = sorted(candidates, key=lambda key: evaluator.score(candidates[key], seconds))[:3]
         expanded = set()

@@ -1,0 +1,10 @@
+﻿strategy,benchmark_score,instances_using_primary_strategy
+published,157182.985,9
+demand_greedy,164349.459,9
+structural,154318.442,9
+fleet_mip,154318.442,1
+anneal_cool,168523.418,5
+anneal_warm,160983.341,5
+genetic,171927.459,5
+route_mip,175505.08,5
+hybrid,152033.833,9
