@@ -1,0 +1,3 @@
+-r requirements.txt
+pyvrp==0.12.2
+-r requirements-optional.txt

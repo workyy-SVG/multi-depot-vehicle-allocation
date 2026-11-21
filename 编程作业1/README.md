@@ -1,8 +1,29 @@
 # 多周期需求下的多仓库车辆分配优化
 
-## 运行
+## 按 getScore.py 优化
 
-在本目录执行下列命令。默认求解只依赖 NumPy。
+使用 Python 3.11 或以上版本，在本目录运行：
+
+```powershell
+python -m pip install -r requirements-score.txt
+python solve.py --objective getscore --score-polish --incumbent-dir score_output --output-dir score_regenerated
+```
+
+已发布的 `.out` 文件及评分对比保存在 `score_output/`，上面的命令将重新搜索的结果写到 `score_regenerated/`。`output/` 提供原仓库方案，`--incumbent-dir` 指定本轮也要复评的上一次方案。可用 `--baseline-dir` 指定其他原始对照目录，用 `--file` 处理单个输入。
+
+这个模式用每位客户的全历史平均需求，分别求解各仓库允许跳过客户的容量车辆路径问题。漏服务罚分为仓库到客户单程欧氏距离的 2 倍。需求和车容量同时乘以历史期数，精确保留平均需求的分数部分。PyVRP 内部距离和罚分按 1000 倍取整，报告分数用原始欧氏距离重新计算。
+
+同载重车辆用动态规划搜索各仓库的车辆数。两个仓库的异构车队在组合数较小时枚举载重分配，其余实例从多个初始方案搜索跨仓移动和交换。逐仓缓存相同容量组合的成本。先用短时限筛选，再按提交文件的车辆编号顺序录入车型，对最终候选和原方案按每仓 3 秒复评。若原方案得分最低，则保留原方案。评分依赖 PyVRP 版本与墙钟时限，复跑时数值可能波动。
+
+`--score-polish` 扩大复评分配集合。对于多仓库异构车队，从多个初始方案采样各仓库可用的车队，并用 SCIP 整数规划联合选择各仓库的车队。模型每仓选择一个车队，各车型在全部仓库的数量之和等于库存，目标为各仓库的 PyVRP 估算成本之和。每轮排除已选的组合，生成多个不同的解，再对前列解重新采样。这个过程能同时改变多个仓库，不要求每一次单车移动都能降分。
+
+如果车队重组未替换上一次方案，则按仓库对挑选单车调拨和换车候选，并用完整评分时限复查其中较好的方案。
+
+对比表中的 `baseline_score`、`incumbent_score` 和 `optimized_score` 分别是本轮对原方案、上一次方案和最终方案的评分。
+
+## 运行历史模式
+
+默认求解只依赖 NumPy。在本目录执行：
 
 ```powershell
 python -m pip install -r requirements.txt
@@ -10,12 +31,12 @@ python solve.py --output-dir regenerated
 python verify.py
 ```
 
-`output/` 内包含九个最终分配文件、各实例的 JSON 运行记录和汇总 CSV。
+`output/` 内包含九个历史模式分配文件、各实例的 JSON 运行记录和汇总 CSV。
 `regenerated/` 可用于核对重新生成的结果。
 单个实例可用 `python solve.py --file input_data/10_random.in --output-dir single`。
 `example_tutorial.out` 是课件给出的格式示例。
 
-## 模型与代价
+## 历史模式的模型与代价
 
 车辆一次性分配给各仓库。每期每辆车可闲置或执行一条往返路线。
 正需求客户至多服务一次，需求不拆分。路线需求总和不得超过车辆载重。

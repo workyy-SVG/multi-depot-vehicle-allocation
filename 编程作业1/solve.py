@@ -268,6 +268,49 @@ def sample_periods(start, stop, count):
     return np.linspace(start, stop - 1, min(stop - start, count), dtype=int).tolist()
 
 
+def write_allocation(path, allocation):
+    path.write_text('\n'.join(' '.join(map(str, [len(ids)] + sorted(ids))) for ids in allocation) + '\n',
+                    encoding='utf-8')
+
+
+def read_allocation(path, data):
+    rows = [list(map(int, line.split())) for line in path.read_text().splitlines()]
+    if any(not row or row[0] != len(row) - 1 for row in rows):
+        raise ValueError(f'Invalid vehicle counts in {path}')
+    allocation = [row[1:] for row in rows]
+    check_allocation(data, allocation)
+    return allocation
+
+
+def solve_for_score(path, outdir, args):
+    from score_search import optimize
+
+    data = read_instance(path)
+    seeds = [baseline(data, data['hist'], kind) for kind in ('balanced', 'mean', 'risk')]
+    reference_file = pathlib.Path(args.baseline_dir) / (path.stem + '.out')
+    reference = read_allocation(reference_file, data) if reference_file.is_file() else seeds[0]
+    incumbent = None
+    if args.incumbent_dir:
+        incumbent_file = pathlib.Path(args.incumbent_dir) / reference_file.name
+        if incumbent_file.is_file():
+            incumbent = read_allocation(incumbent_file, data)
+    final, before, incumbent_score, after = optimize(
+        data, [reference, *seeds], reference, args.rounds, args.score_search_ms / 1000,
+        incumbent=incumbent, polish=args.score_polish,
+    )
+    check_allocation(data, final)
+    write_allocation(outdir / (path.stem + '.out'), final)
+    print(f'{path.name}: baseline {before:.4f}, incumbent {incumbent_score:.4f}, final {after:.4f}',
+          flush=True)
+    source = 'balanced'
+    if reference_file.is_file():
+        source = str(reference_file)
+        if reference_file.is_relative_to(HERE):
+            source = reference_file.relative_to(HERE).as_posix()
+    return (path.name, source, before, after, before - after if math.isfinite(before) else None,
+            incumbent_score, incumbent_score - after if math.isfinite(incumbent_score) else None)
+
+
 def solve(path, outdir, args):
     data = read_instance(path)
     evaluator = FleetEvaluator(data)
@@ -304,8 +347,7 @@ def solve(path, outdir, args):
     check_allocation(data, final)
     candidates['local_search'] = final
     target = outdir / (path.stem + '.out')
-    target.write_text('\n'.join(' '.join(map(str, [len(ids)] + sorted(ids))) for ids in final) + '\n',
-                      encoding='utf-8')
+    write_allocation(target, final)
     report = dict(input=path.name, selected='local_search', seed=seed,
                   allocation=final, candidates=candidates, rolling_validation=audits,
                   search_periods=train,
@@ -324,20 +366,44 @@ def solve(path, outdir, args):
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument('--input-dir',default=str(HERE/'input_data'))
-    p.add_argument('--output-dir',default=str(HERE/'output'))
+    p.add_argument('--output-dir')
     p.add_argument('--file',help='Optional single .in file')
+    p.add_argument('--objective', choices=('historical', 'getscore'), default='historical')
+    p.add_argument('--baseline-dir', default='output', help='Reference allocations for getscore')
+    p.add_argument('--incumbent-dir', help='Keep stronger allocations from an earlier getscore run')
+    p.add_argument('--score-polish', action='store_true',
+                   help='Recombine scored fleets and rerank a wider shortlist')
+    p.add_argument('--score-search-ms', type=int, default=30,
+                   help='Routing milliseconds per depot fleet in the first getscore pass')
     p.add_argument('--cp-sat', action='store_true', help='Add a CP-SAT seed to the final fit')
     p.add_argument('--train-periods', type=int, default=4)
-    p.add_argument('--rounds', type=int, default=2)
+    p.add_argument('--rounds', type=int, help='Fleet search rounds (historical: 2, getscore: 5)')
     p.add_argument('--seconds',type=float,default=35)
     p.add_argument('--scenarios',type=int,default=5)
     p.add_argument('--offsets',type=int,default=3)
     p.add_argument('--eval-periods',type=int,default=3)
-    args = p.parse_args(); out = pathlib.Path(args.output_dir); out.mkdir(parents=True,exist_ok=True)
+    args = p.parse_args()
+    if args.rounds is None:
+        args.rounds = 5 if args.objective == 'getscore' else 2
+    default_output = 'score_output' if args.objective == 'getscore' else 'output'
+    out = pathlib.Path(args.output_dir) if args.output_dir else HERE / default_output
     files = [pathlib.Path(args.file)] if args.file else sorted(pathlib.Path(args.input_dir).glob('*.in'))
     if not files: raise SystemExit('No input files found.')
     if min(args.train_periods, args.eval_periods, args.scenarios, args.offsets) < 1 or args.rounds < 0:
         p.error('period counts, scenarios and offsets must be positive; rounds must be nonnegative')
+    if args.score_search_ms < 1:
+        p.error('--score-search-ms must be positive')
+    out.mkdir(parents=True, exist_ok=True)
+    if args.objective == 'getscore':
+        args.baseline_dir = str(HERE / args.baseline_dir)
+        with (out / 'comparison.csv').open('w', encoding='utf-8-sig', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['input', 'reference', 'baseline_score', 'optimized_score', 'reduction',
+                             'incumbent_score', 'reduction_vs_incumbent'])
+            for path in files:
+                writer.writerow(solve_for_score(path, out, args))
+                f.flush()
+        return
     reports = [solve(path, out, args) for path in files]
     with (out / 'comparison.csv').open('w', encoding='utf-8-sig', newline='') as f:
         writer = csv.writer(f)

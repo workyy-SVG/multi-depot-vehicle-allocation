@@ -8,6 +8,42 @@ from fleet_search import improve_fleet
 
 
 class Checks(unittest.TestCase):
+    @unittest.skipUnless(importlib.util.find_spec("pyvrp"), "optional PyVRP dependency")
+    def test_getscore_uses_fractional_mean_and_round_trip_penalty(self):
+        from score_search import ScoreEvaluator
+
+        evaluator = ScoreEvaluator({
+            'caps': [2, 3], 'T': 2,
+            'coords': [np.array([[1, 0], [2, 0]])],
+            'depots': [np.array([0, 0])],
+            'hist': [np.array([[1, 2], [2, 1]])],
+        })
+        self.assertAlmostEqual(evaluator.score([[]], 0.1), 6)
+        self.assertAlmostEqual(evaluator.score([[0]], 0.1), 6)
+        self.assertAlmostEqual(evaluator.score([[1]], 0.1), 4)
+
+    @unittest.skipUnless(importlib.util.find_spec("pyvrp") and importlib.util.find_spec("ortools"),
+                         "optional PyVRP and OR-Tools dependencies")
+    def test_score_polish_can_recombine_three_depots(self):
+        from score_search import recombine_fleets
+
+        class Evaluator:
+            capacities = [1, 2, 3, 4, 5, 6]
+            depots = range(3)
+            targets = ((1, 4), (3, 6), (2, 5))
+
+            def fleet(self, ids):
+                return tuple(sorted(self.capacities[vehicle] for vehicle in ids))
+
+            def cost(self, depot, fleet, seconds):
+                return len(set(fleet).symmetric_difference(self.targets[depot]))
+
+        evaluator = Evaluator()
+        solutions = recombine_fleets(evaluator, [[[0, 1], [2, 3], [4, 5]]], 0.01)
+        self.assertEqual(tuple(map(evaluator.fleet, solutions[0])), evaluator.targets)
+        for allocation in solutions:
+            check_allocation({'D': 3, 'V': 6}, allocation)
+
     @unittest.skipUnless(importlib.util.find_spec("ortools"), "optional OR-Tools dependency")
     def test_route_objective(self):
         # Depot 0, customers at 1 and 2 on a line. One truck of capacity 2
