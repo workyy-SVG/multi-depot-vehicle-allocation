@@ -1,0 +1,10 @@
+instance,selected,median_score,best_repository_reference,repository_median_score,original_median_score,reduction_vs_repository,reduction_pct
+05_increasing_demand,score_output,2194.324,score_output,2194.324,2254.395,0.000,0.0000
+06_random,score_output,1833.318,score_output,1833.318,1847.269,0.000,0.0000
+07_random,search_1_rank_3,4983.440,score_output,4985.279,4985.574,1.839,0.0369
+08_random,score_output,9379.008,score_output,9379.008,9849.341,0.000,0.0000
+09_random,score_output,23304.118,score_output,23304.118,26192.566,0.000,0.0000
+10_random,search_1_rank_2,6013.431,score_benchmark,6090.007,6176.265,76.576,1.2574
+11_random,output,2702.179,output,2702.179,2702.179,0.000,0.0000
+12_random,score_output,27464.440,score_output,27464.440,30559.698,0.000,0.0000
+13_random,search_1_rank_1,64015.524,score_benchmark,65264.290,66842.459,1248.766,1.9134

@@ -1,0 +1,10 @@
+instance,selected_score,reference_score,same_allocation
+05_increasing_demand,2188.685,2188.685,True
+06_random,1833.318,1833.318,True
+07_random,4983.268,4983.248,False
+08_random,9494.851,9494.851,True
+09_random,22964.899,22964.899,True
+10_random,5999.927,6074.1810000000005,False
+11_random,2687.245,2687.245,True
+12_random,27855.214,27855.214,True
+13_random,63700.409,64890.55900000001,False
