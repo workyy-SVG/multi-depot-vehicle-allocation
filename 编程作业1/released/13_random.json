@@ -1,0 +1,176 @@
+{
+  "input": "13_random.in",
+  "input_sha256": "0eb2c9dea1330105c990dc36437e94b304f6639c13384313afae2a3ae5ae40d4",
+  "objective": "getscore",
+  "penalty_multiplier": 2,
+  "distance_scale": 1000,
+  "allocation": [
+    [
+      18,
+      20,
+      23
+    ],
+    [
+      2,
+      8,
+      10,
+      19,
+      22,
+      25,
+      26
+    ],
+    [
+      1,
+      7,
+      11,
+      27,
+      28
+    ],
+    [
+      4,
+      5,
+      13,
+      16,
+      21,
+      29
+    ],
+    [
+      0,
+      3,
+      6,
+      9,
+      12,
+      14,
+      15,
+      17,
+      24
+    ]
+  ],
+  "capacities": [
+    834,
+    2746,
+    2867,
+    1850,
+    4545
+  ],
+  "declared_customer_counts": [
+    200,
+    300,
+    200,
+    100,
+    300
+  ],
+  "ignored_trailing_records": 155,
+  "periods": 100,
+  "selected_source": "score_optimization/allocations",
+  "score": 70170.139,
+  "validation": {
+    "selected": "score_optimization/allocations",
+    "allocation": [
+      [
+        18,
+        20,
+        23
+      ],
+      [
+        2,
+        8,
+        10,
+        19,
+        22,
+        25,
+        26
+      ],
+      [
+        1,
+        7,
+        11,
+        27,
+        28
+      ],
+      [
+        4,
+        5,
+        13,
+        16,
+        21,
+        29
+      ],
+      [
+        0,
+        3,
+        6,
+        9,
+        12,
+        14,
+        15,
+        17,
+        24
+      ]
+    ],
+    "candidates": [
+      {
+        "name": "score_optimization/allocations",
+        "scores": [
+          70170.139,
+          64321.888000000006,
+          80440.934
+        ],
+        "median": 70170.139,
+        "minimum": 64321.888000000006,
+        "maximum": 80440.934
+      },
+      {
+        "name": "score_output",
+        "scores": [
+          94037.976,
+          68114.288,
+          89524.05500000001
+        ],
+        "median": 89524.05500000001,
+        "minimum": 68114.288,
+        "maximum": 94037.976
+      },
+      {
+        "name": "score_benchmark",
+        "scores": [
+          89230.426,
+          66711.95599999999,
+          91749.967
+        ],
+        "median": 89230.426,
+        "minimum": 66711.95599999999,
+        "maximum": 91749.967
+      },
+      {
+        "name": "output",
+        "scores": [
+          78018.62,
+          68085.636,
+          87175.337
+        ],
+        "median": 78018.62,
+        "minimum": 68085.636,
+        "maximum": 87175.337
+      }
+    ],
+    "trials": 3,
+    "seconds_per_depot": 3.0,
+    "seed": 0,
+    "objective": "getscore",
+    "distance_scale": 1000,
+    "penalty_multiplier": 2,
+    "profile": {
+      "preprocess_seconds": 0.05813070002477616,
+      "model_seconds": 0.02504960002261214,
+      "solve_seconds": 145.3314269000257,
+      "solver_calls": 48
+    },
+    "elapsed_seconds": 145.43016039999202,
+    "status": "validated"
+  },
+  "environment": {
+    "pyvrp": "0.12.2",
+    "numpy": "2.5.5"
+  }
+}

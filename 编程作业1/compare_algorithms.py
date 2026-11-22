@@ -20,17 +20,8 @@ from pyvrp.stop import MaxRuntime
 
 class GraderEvaluator(ScoreEvaluator):
     """Use PyVRP's cost directly, as getScore.py does, in the compatible units."""
-
-    def cost(self, depot, fleet, seconds):
-        location, clients, _, costs, durations, drop_all = self.depots[depot]
-        if not fleet or not clients:
-            return drop_all
-        vehicle_types = [VehicleType(capacity=[cap * self.periods]) for cap in fleet]
-        problem = ProblemData(clients, [location], vehicle_types, [costs], [durations])
-        result = route_solve(problem, MaxRuntime(seconds), collect_stats=False)
-        if result.best.is_feasible():
-            return result.cost() / DISTANCE_SCALE
-        return drop_all if seconds < 3 else float('inf')
+    # Kept as a public name for existing experiment scripts.
+    pass
 
 
 def ranked(evaluator, candidates, seconds, keep):
@@ -59,6 +50,8 @@ def as_groups(assignment, num_depots):
 
 def mutate(assignment, num_depots, rng, moves=1):
     candidate = assignment.copy()
+    if num_depots <= 1 or not candidate:
+        return candidate
     for _ in range(moves):
         vehicle = rng.randrange(len(candidate))
         depot = candidate[vehicle]
@@ -208,6 +201,10 @@ def combine_measured_fleets(evaluator, candidates):
 def benchmark(data, published, *, evaluator=None):
     if evaluator is None:
         evaluator = GraderEvaluator(data)
+    if data['D'] == 1:
+        groups = [list(range(data['V']))]
+        score = evaluator.score(groups, 3.0, output_order=True)
+        return {'published': (published, score), 'single_depot': (groups, score)}
     short = 0.045
     demand_seeds = [solve.baseline(data, data['hist'], kind) for kind in ('mean', 'risk', 'balanced')]
     seeds = [published, *demand_seeds]
@@ -356,7 +353,9 @@ def main():
     search = deeper_benchmark if args.deeper else benchmark
     if args.wide_local:
         search = wide_local_benchmark
-    if args.portfolio:
+    if data['D'] == 1:
+        outcomes = benchmark(data, published)
+    elif args.portfolio:
         confirmed_file = solve.HERE / 'score_benchmark' / original.name
         confirmed = (solve.read_allocation(confirmed_file, data)
                      if reference_matches and confirmed_file.is_file() else None)

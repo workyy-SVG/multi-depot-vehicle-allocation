@@ -8,7 +8,7 @@
 const link = document.getElementById('continue');
 const target = new URL(link.href);
 const params = new URLSearchParams(window.location.search);
-for (const key of ['instance', 'window']) {
+for (const key of ['instance', 'window', 'mode', 'question']) {
   const value = params.get(key);
   if (value !== null) target.searchParams.set(key, value);
 }

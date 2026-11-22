@@ -1,0 +1,5 @@
+__pycache__/
+*.py[cod]
+_test_work/
+_work/
+.streamlit/secrets.toml

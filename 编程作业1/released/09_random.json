@@ -1,0 +1,118 @@
+{
+  "input": "09_random.in",
+  "input_sha256": "3d045acd9d3c166419c9fbbd600ad5f4d51bb956d8768755220d6d13a7248f64",
+  "objective": "getscore",
+  "penalty_multiplier": 2,
+  "distance_scale": 1000,
+  "allocation": [
+    [
+      0,
+      1,
+      4,
+      5,
+      9
+    ],
+    [
+      2,
+      3,
+      6,
+      7,
+      8
+    ]
+  ],
+  "capacities": [
+    1600,
+    1400
+  ],
+  "declared_customer_counts": [
+    400,
+    250
+  ],
+  "ignored_trailing_records": 203,
+  "periods": 100,
+  "selected_source": "score_optimization/allocations",
+  "score": 26888.288,
+  "validation": {
+    "selected": "score_optimization/allocations",
+    "allocation": [
+      [
+        0,
+        1,
+        4,
+        5,
+        9
+      ],
+      [
+        2,
+        3,
+        6,
+        7,
+        8
+      ]
+    ],
+    "candidates": [
+      {
+        "name": "score_optimization/allocations",
+        "scores": [
+          25825.222999999998,
+          27712.61,
+          26888.288
+        ],
+        "median": 26888.288,
+        "minimum": 25825.222999999998,
+        "maximum": 27712.61
+      },
+      {
+        "name": "score_output",
+        "scores": [
+          25825.222999999998,
+          27712.61,
+          26888.288
+        ],
+        "median": 26888.288,
+        "minimum": 25825.222999999998,
+        "maximum": 27712.61
+      },
+      {
+        "name": "score_benchmark",
+        "scores": [
+          25825.222999999998,
+          27712.61,
+          26888.288
+        ],
+        "median": 26888.288,
+        "minimum": 25825.222999999998,
+        "maximum": 27712.61
+      },
+      {
+        "name": "output",
+        "scores": [
+          31596.508,
+          36205.066999999995,
+          31596.508
+        ],
+        "median": 31596.508,
+        "minimum": 31596.508,
+        "maximum": 36205.066999999995
+      }
+    ],
+    "trials": 3,
+    "seconds_per_depot": 3.0,
+    "seed": 0,
+    "objective": "getscore",
+    "distance_scale": 1000,
+    "penalty_multiplier": 2,
+    "profile": {
+      "preprocess_seconds": 0.0704618000308983,
+      "model_seconds": 0.008649000024888664,
+      "solve_seconds": 36.81644759993651,
+      "solver_calls": 12
+    },
+    "elapsed_seconds": 36.899686899996595,
+    "status": "validated"
+  },
+  "environment": {
+    "pyvrp": "0.12.2",
+    "numpy": "2.5.5"
+  }
+}

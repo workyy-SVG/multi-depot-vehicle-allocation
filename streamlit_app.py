@@ -7,6 +7,7 @@ import streamlit as st
 
 
 RESULTS = Path(__file__).resolve().parent / "编程作业1" / "output"
+SCORE_RESULTS = Path(__file__).resolve().parent / "编程作业1" / "released"
 STRATEGIES = {
     "balanced": "均衡分配",
     "mean": "平均需求",
@@ -24,10 +25,15 @@ SUGGESTED_QUESTIONS = (
 )
 
 
-def load_results():
+def load_results(mode="historical"):
+    directory = SCORE_RESULTS if mode == 'getscore' else RESULTS
+    paths = sorted(directory.glob('*.json'))
+    if mode == 'getscore' and (directory/'manifest.json').is_file():
+        manifest = json.loads((directory/'manifest.json').read_text(encoding='utf-8'))
+        paths = [directory/Path(row['output']).with_suffix('.json').name for row in manifest['cases']]
     return {
         path.stem: json.loads(path.read_text(encoding="utf-8"))
-        for path in sorted(RESULTS.glob("*.json"))
+        for path in paths if path.name != 'manifest.json'
     }
 
 
@@ -73,6 +79,7 @@ def render_ai_analysis(instance, report, window, validation):
             "关于当前结果，你想了解什么？",
             placeholder="局部搜索比均衡分配省了多少？两者的估算成本分别是多少？",
             max_chars=500,
+            value=str(st.query_params.get('question', ''))[:500],
             disabled=not api_key,
         )
         submitted = st.form_submit_button("问 DeepSeek", disabled=not api_key)
@@ -205,18 +212,61 @@ def render_warehouse_analysis(results):
     render_deepseek(context, instruction, api_key, warehouse=True)
 
 
+def render_score_analysis(instance, report):
+    validation = report['validation']
+    if validation['status'] != 'validated':
+        st.warning('当前为超时保留的合法分配，尚未完成本轮独立复测。')
+        return
+    st.subheader('评分方案的独立复测')
+    st.caption(f"全历史平均需求；未服务罚分为单程距离的 2 倍；每仓 {validation['seconds_per_depot']} 秒，独立复测 {validation['trials']} 次。")
+    labels = {'output':'原方案', 'score_output':'评分搜索', 'score_benchmark':'组合搜索',
+              'score_optimization/allocations':'改进方案', 'released':'上次正式提交'}
+    st.table([{'方案': labels.get(row['name'], f'候选方案 {i+1}'), '成本中位数': round(row['median'], 3),
+               '最低': round(row['minimum'], 3), '最高': round(row['maximum'], 3),
+               '正式提交': row['name'] == validation['selected']}
+              for i, row in enumerate(validation['candidates'])])
+    selected = labels.get(validation['selected'], '复测选中的方案')
+    st.info(f"正式提交方案：{selected}；兼容参考成本中位数 {report['score']:,.3f}。")
+    st.caption('成本越低越好。结果来自限时求解，仍会随运行环境波动。')
+    api_key = deepseek_key()
+    if not api_key:
+        st.info('配置 DeepSeek 后可就当前正式提交结果提问。')
+        return
+    with st.form(key=f'score_question_{instance}'):
+        question = st.text_area('关于评分方案，你想了解什么？',
+                                value=str(st.query_params.get('question', ''))[:500],
+                                max_chars=500)
+        submitted = st.form_submit_button('发送问题')
+    if submitted and question.strip():
+        context = {'实例': instance, '目标': '全历史平均需求，漏服务罚分为单程距离的2倍',
+                   '正式提交分配': report['allocation'], '成本中位数': report['score'],
+                   '独立复测': validation['candidates'], '问题': question.strip()}
+        render_deepseek(context, '用简体中文简短解释给定评分结果。准确引用数字；成本越低越好。'
+                        '这些数值不是百分制成绩。不得把历史滚动验证成本与本目标混用。'
+                        '没有逐仓成本或分车原因时，说明数据不足。', api_key)
+
+
 def main():
     st.set_page_config(page_title="编程作业1 · 结果分析", page_icon="🚚")
+    default_mode = 'getscore' if (SCORE_RESULTS/'manifest.json').is_file() else 'historical'
+    requested_mode = st.query_params.get('mode', default_mode)
+    if requested_mode not in ('getscore', 'historical'):
+        requested_mode = default_mode
     if st.query_params.get("view") == "warehouse":
-        render_warehouse_analysis(load_results())
+        render_warehouse_analysis(load_results(requested_mode))
         return
 
     st.title("多仓库车辆分配 · 结果分析")
-    st.caption("查看求解器生成的车辆分配和滚动验证成本。")
+    modes = ['getscore', 'historical']
+    mode = st.selectbox('结果模式', modes,
+                        index=modes.index(requested_mode) if requested_mode in modes else 0,
+                        format_func=lambda value: '评分与正式提交' if value == 'getscore' else '历史滚动验证')
+    st.query_params['mode'] = mode
+    st.caption('评分模式和历史滚动验证采用不同需求与罚分定义，分别展示。')
 
-    results = load_results()
+    results = load_results(mode)
     if not results:
-        st.error("未找到作业结果文件，请检查仓库中的编程作业1/output 目录。")
+        st.error('当前模式尚无结果文件。请生成正式提交或切换至历史滚动验证。')
         st.stop()
 
     names = list(results)
@@ -235,7 +285,14 @@ def main():
         for depot, vehicles in enumerate(report["allocation"])
     ])
 
+    if mode == 'getscore':
+        render_score_analysis(instance, report)
+        return
+
     windows = report["rolling_validation"]
+    if not windows:
+        st.info('历史期数不足，当前实例没有可用的滚动验证窗口。')
+        return
     requested_window = st.query_params.get("window", "")
     window_indices = list(range(len(windows)))
     initial_window = next((i for i in window_indices if str(i) == requested_window), 0)

@@ -1,0 +1,160 @@
+{
+  "input": "10_random.in",
+  "input_sha256": "4032a22a92a175ab680673c15f08c88cafea2746b281a05f8ed1a2c4c5319db4",
+  "objective": "getscore",
+  "penalty_multiplier": 2,
+  "distance_scale": 1000,
+  "allocation": [
+    [
+      9,
+      11
+    ],
+    [
+      6,
+      12,
+      14
+    ],
+    [
+      3,
+      8,
+      10,
+      15
+    ],
+    [
+      0,
+      1,
+      2,
+      4,
+      17,
+      18,
+      19
+    ],
+    [
+      5,
+      7,
+      13,
+      16,
+      20,
+      21
+    ]
+  ],
+  "capacities": [
+    220,
+    350,
+    400,
+    680,
+    880
+  ],
+  "declared_customer_counts": [
+    150,
+    150,
+    150,
+    150,
+    150
+  ],
+  "ignored_trailing_records": 0,
+  "periods": 100,
+  "selected_source": "score_optimization/allocations",
+  "score": 6041.327000000001,
+  "validation": {
+    "selected": "score_optimization/allocations",
+    "allocation": [
+      [
+        9,
+        11
+      ],
+      [
+        6,
+        12,
+        14
+      ],
+      [
+        3,
+        8,
+        10,
+        15
+      ],
+      [
+        0,
+        1,
+        2,
+        4,
+        17,
+        18,
+        19
+      ],
+      [
+        5,
+        7,
+        13,
+        16,
+        20,
+        21
+      ]
+    ],
+    "candidates": [
+      {
+        "name": "score_optimization/allocations",
+        "scores": [
+          6041.327000000001,
+          6118.055999999999,
+          6030.061
+        ],
+        "median": 6041.327000000001,
+        "minimum": 6030.061,
+        "maximum": 6118.055999999999
+      },
+      {
+        "name": "score_output",
+        "scores": [
+          6173.61,
+          6144.594,
+          6190.179
+        ],
+        "median": 6173.61,
+        "minimum": 6144.594,
+        "maximum": 6190.179
+      },
+      {
+        "name": "score_benchmark",
+        "scores": [
+          6134.094999999999,
+          6095.732,
+          6119.725
+        ],
+        "median": 6119.725,
+        "minimum": 6095.732,
+        "maximum": 6134.094999999999
+      },
+      {
+        "name": "output",
+        "scores": [
+          6236.436,
+          6313.342,
+          6252.634
+        ],
+        "median": 6252.634,
+        "minimum": 6236.436,
+        "maximum": 6313.342
+      }
+    ],
+    "trials": 3,
+    "seconds_per_depot": 3.0,
+    "seed": 0,
+    "objective": "getscore",
+    "distance_scale": 1000,
+    "penalty_multiplier": 2,
+    "profile": {
+      "preprocess_seconds": 0.030692500004079193,
+      "model_seconds": 0.014162500097882003,
+      "solve_seconds": 171.7150259001064,
+      "solver_calls": 57
+    },
+    "elapsed_seconds": 171.7754697999917,
+    "status": "validated"
+  },
+  "environment": {
+    "pyvrp": "0.12.2",
+    "numpy": "2.5.5"
+  }
+}

@@ -76,7 +76,7 @@ a{color:var(--accent);font-weight:650}
 .overview button{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:8px 14px}
 canvas{height:clamp(315px,47vh,525px)}
 tr[data-focused=true]{background:var(--hero)}
-.cost .barrow{grid-template-columns:104px minmax(0,1fr) 92px;font-size:14px;margin:14px 0}
+.cost .barrow{grid-template-columns:104px minmax(0,1fr) 104px;font-size:14px;margin:14px 0}
 .cost .fill{height:14px}
 .ai a{display:inline-block;margin-top:13px}
 @media(max-width:1030px){
@@ -86,7 +86,7 @@ tr[data-focused=true]{background:var(--hero)}
 @media(max-width:590px){
 .hero,.card{padding:14px}
 canvas{height:280px}
-.cost .barrow{grid-template-columns:78px minmax(0,1fr) 68px;font-size:12px}
+.cost .barrow{grid-template-columns:78px minmax(0,1fr) 82px;font-size:12px}
 form{flex-wrap:wrap}
 }
 figure{margin:0}
@@ -170,9 +170,11 @@ figcaption strong{display:block;margin-bottom:3px}
 <main id="project" data-view="overview"><div class="shell">
 <header class="hero"><p class="kicker">算法设计课程 · 编程作业 1</p><h1>多周期需求下的多仓库车辆分配</h1><p class="subtitle">根据历史需求和配送成本，决定每辆车分配到哪个仓库。</p><div class="stats" id="stats"></div></header>
 <div class="controls">
+<label class="field" for="result-mode">结果模式<select id="result-mode"><option value="getscore">评分与正式提交</option><option value="historical">历史滚动验证</option></select></label>
 <label class="field">测试实例<select id="instance"></select></label>
 <label class="field" id="window-field" hidden>验证窗口<select id="window"></select></label>
 <p class="note" id="warning" hidden></p>
+<p class="note" id="result-context"></p>
 </div>
 <div class="grid">
 <section class="card map">
@@ -216,7 +218,7 @@ figcaption strong{display:block;margin-bottom:3px}
 </section>
 <section class="card overview" data-section="overview">
 <h2>项目要解决什么</h2>
-<dl><dt>输入</dt><dd>客户位置、历史订单量、仓库位置与车辆载重。</dd><dt>目标</dt><dd>提前分配车辆，降低估算配送成本。</dd><dt>算法</dt><dd>构造多种初始分配，再尝试跨仓库移动和交换车辆。</dd><dt>输出与验证</dt><dd>输出每个仓库的车辆清单，在后续验证期比较配送距离和未服务罚分。</dd></dl>
+<dl><dt>输入</dt><dd>客户位置、历史订单量、仓库位置与车辆载重。</dd><dt>目标</dt><dd>提前分配车辆，降低估算配送成本。</dd><dt>算法</dt><dd>构造多种初始分配，再尝试跨仓库移动和交换车辆。</dd><dt>输出与验证</dt><dd id="overview-validation">输出每个仓库的车辆清单，在后续验证期比较配送距离和未服务罚分。</dd></dl>
 <figure>
 <h2>算法流程</h2>
 <ol class="flow-list">
@@ -225,15 +227,15 @@ figcaption strong{display:block;margin-bottom:3px}
 <li>移动或交换车辆<small>按训练期估算成本筛选</small></li>
 <li>验证分配策略<small>在后续周期比较成本</small></li>
 </ol>
-<figcaption><strong>怎么理解这个流程</strong>每个验证窗口先用较早的历史生成方案，再用后续周期检查效果。最终车辆清单以全部历史为取样范围。</figcaption>
+<figcaption><strong>怎么理解这个流程</strong><span id="flow-explanation">每个验证窗口先用较早的历史生成方案，再用后续周期检查效果。最终车辆清单以全部历史为取样范围。</span></figcaption>
 </figure>
 <button style="margin-top:14px" id="show-fleet" type="button">查看车辆分配 →</button>
 </section>
-<section class="card fleet" data-section="fleet" hidden><h2>最终车辆分配</h2><p class="muted">根据全部历史生成</p><div class="table-wrap"><table><thead><tr><th>仓库</th><th>车辆数</th><th>总载重</th><th>车辆编号</th></tr></thead><tbody id="fleet"></tbody></table></div>
+<section class="card fleet" data-section="fleet" hidden><h2>最终车辆分配</h2><p class="muted" id="fleet-source">根据全部历史生成</p><div class="table-wrap"><table><thead><tr><th>仓库</th><th>车辆数</th><th>总载重</th><th>车辆编号</th></tr></thead><tbody id="fleet"></tbody></table></div>
 <figure><h2>各仓库的车辆数和总载重</h2><div class="capacity-charts" id="capacity-charts"></div>
 <figcaption><strong>数量和运力怎么看</strong><span id="capacity-explanation"></span></figcaption></figure></section>
-<section class="card cost" data-section="cost" hidden><h2>各策略的验证成本</h2><p class="muted" id="periods"></p><figure><div id="bars"></div><figcaption><strong>当前窗口的结果</strong><span id="cost-result"></span></figcaption></figure>
-<figure class="heat"><h2>18 个验证窗口的成本差异</h2>
+<section class="card cost" data-section="cost" hidden><h2 id="cost-heading">各策略的验证成本</h2><p class="muted" id="periods"></p><figure><div id="bars"></div><figcaption><strong>结果说明</strong><span id="cost-result"></span></figcaption></figure>
+<figure class="heat" id="historical-heat"><h2>18 个验证窗口的成本差异</h2>
 <p class="muted">局部搜索相对均衡分配的成本变化。↓ 表示更省，＝表示持平，↑ 表示更贵。点击格子查看对应成本图。</p>
 <div class="table-wrap"><table><thead><tr><th scope="col">测试实例</th><th scope="col">窗口 1</th><th scope="col">窗口 2</th></tr></thead><tbody id="heat-body"></tbody></table></div>
 <figcaption><strong>整体结果与例外</strong><span id="heat-explanation"></span></figcaption></figure></section>
@@ -241,11 +243,14 @@ figcaption strong{display:block;margin-bottom:3px}
 </div>
 </div></main>
 <script src="data.js"></script>
+<script src="published.js"></script>
+<script src="score-view.js"></script>
 <script>
 const $ = (id) => document.getElementById(id);
 const project = $('project');
 const dataset = $('instance');
 const windowPicker = $('window');
+const resultMode = $('result-mode');
 const canvas = $('map');
 const localCanvas = $('local-map');
 const palettes = {
@@ -270,7 +275,7 @@ const record = () => instances[dataset.value];
 const currentWindow = () => record().windows[Number(windowPicker.value)];
 const colors = () => palettes.light;
 const costCents = (cost) => Math.round(cost * 100);
-const fleetRows = () => record().allocation.map((ids, depot) => ({
+const fleetRows = () => (scoreModeActive() && currentPublished() ? currentPublished().allocation : record().allocation).map((ids, depot) => ({
   depot, ids:[...ids].sort((a,b)=>a-b), count:ids.length,
   capacity:ids.reduce((total,id)=>total+record().caps[id],0)
 }));
@@ -423,6 +428,13 @@ function renderDepots() {
 }
 
 function renderCosts() {
+  $('historical-heat').hidden = scoreModeActive();
+  if (scoreModeActive()) {
+    renderScoreCosts();
+    renderAnswer();
+    return;
+  }
+  $('cost-heading').textContent = '各策略的历史验证成本';
   const w = currentWindow();
   $('periods').textContent = '训练前 '+w.train_end_exclusive+' 期 · 验证第 '+w.test_periods.map(p=>p+1).join('、')+' 期';
   const entries = Object.entries(labels).map(([key,label])=>({key,label,cost:w.costs[key]}));
@@ -431,7 +443,7 @@ function renderCosts() {
   const delta = costCents(w.costs.local_search)-costCents(w.costs.balanced);
   $('cost-result').textContent = delta===0 ? '局部搜索与均衡分配的估算成本持平。' : '局部搜索的估算成本比均衡分配'+(delta<0?'低 ':'高 ')+formatter.format(Math.abs(delta)/100)+'。';
   const link = new URL('https://workyy-svg.github.io/multi-depot-vehicle-allocation/ai/');
-  link.search = new URLSearchParams({instance:dataset.value,window:windowPicker.value});
+  link.search = new URLSearchParams({instance:dataset.value,window:windowPicker.value,mode:'historical'});
   $('ai-link').href = link.href;
   const best = Math.min(...entries.map(row=>costCents(row.cost)));
   const leaders = entries.filter(row=>costCents(row.cost)===best).map(row=>row.label);
@@ -444,6 +456,7 @@ function renderAnswer() {
   $('ai-figure').hidden = activeQuestion===null;
   Array.from($('prompts').children).forEach((button,index)=>button.setAttribute('aria-pressed',index===activeQuestion));
   if (activeQuestion===null) return;
+  if (scoreModeActive() && renderScoreAnswer()) return;
   const w = currentWindow();
   const ranked = Object.entries(labels).map(([key,label])=>({label, cents:costCents(w.costs[key])})).sort((a,b)=>a.cents-b.cents);
   const fleet = fleetRows();
@@ -504,6 +517,7 @@ function renderAnswer() {
 function renderInstance() {
   const d = record();
   focus = 0;
+  renderResultContext();
   resetDemand();
   moveMap(null);
   windowPicker.replaceChildren(...d.windows.map((_,i)=>new Option('窗口 '+(i+1),i)));
@@ -521,20 +535,34 @@ function renderInstance() {
 
 dataset.replaceChildren(...Object.keys(instances).map(key=>new Option(key,key)));
 dataset.value = '10_random';
-$('prompts').replaceChildren(...questions.map((question,i)=>{
+resultMode.value = Object.keys(publishedResults).length ? 'getscore' : 'historical';
+function renderQuestions() {
+const displayedQuestions = scoreModeActive() ? [
+  '哪个方案复测成本最低？','正式提交比原方案节省多少？','各方案复测结果如何？',
+  '哪个仓库车辆最多？','哪个仓库总载重最高？','采用什么评分方法？','各仓库需求波动多大？'
+] : questions;
+$('prompts').replaceChildren(...displayedQuestions.map((question,i)=>{
   const button = document.createElement('button');
   button.type = 'button';
   button.textContent = question;
   button.addEventListener('click',()=>{activeQuestion=i;renderAnswer();});
   return button;
 }));
+}
+renderQuestions();
+resultMode.addEventListener('change',()=>{
+  activeQuestion=null;
+  renderQuestions();
+  renderInstance();
+  showView(project.dataset.view);
+});
 const navButtons = [...document.querySelectorAll('.tabs button')];
 function showView(view) {
   project.dataset.view = view;
   navButtons.forEach(button=>button.setAttribute('aria-pressed',button.dataset.view===view));
   document.querySelector('.map').hidden = view!=='overview' && view!=='fleet';
   document.querySelectorAll('[data-section]').forEach(section=>section.hidden=section.dataset.section!==view);
-  $('window-field').hidden = view!=='cost' && view!=='ai';
+  $('window-field').hidden = scoreModeActive() || (view!=='cost' && view!=='ai');
   drawMap();
   if (view !== 'overview') stopDemand();
 }
@@ -555,10 +583,11 @@ windowPicker.addEventListener('change',renderCosts);
 $('ask').addEventListener('submit',event=>{
   event.preventDefault();
   const target = new URL($('ai-link').href);
+  target.searchParams.set('question',$('question').value.trim().slice(0,500));
   window.open(target.href,'_blank','noopener');
   activeQuestion=null;
   renderAnswer();
-  $('ask-status').textContent='已打开现有问答页。请在问答框中输入：'+$('question').value.trim();
+  $('ask-status').textContent='问题已带到问答页，请核对后点击发送。';
 });
 function renderMapExplanation() {
   const {groups} = record();
@@ -600,7 +629,7 @@ function renderWarehouseComparison(groups) {
       '</td><td>'+integer.format(base)+'</td><td>'+(value>base?'+':'')+integer.format(value-base)+'</td></tr>').join('')+
     '</tbody></table>';
   const url = new URL('https://multi-depot-vehicle-allocation-q5pvak8radnex77ftefspu.streamlit.app/');
-  url.search = new URLSearchParams({view:'warehouse', instance:dataset.value, depot:String(focus)});
+  url.search = new URLSearchParams({view:'warehouse', instance:dataset.value, depot:String(focus), mode:resultMode.value});
   link.href = url.href;
   url.searchParams.set('embed', 'true');
   if (frame.getAttribute('src') !== url.href) frame.src = url.href;

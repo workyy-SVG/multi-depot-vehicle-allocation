@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "objective": "getscore",
+  "penalty_multiplier": 2,
+  "distance_scale": 1000,
+  "seconds_per_depot": 3.0,
+  "requested_trials": 3,
+  "time_budget": 1200.0,
+  "elapsed_seconds": 653.4481859999942,
+  "complete": true,
+  "cases": [
+    {
+      "input": "05_increasing_demand.in",
+      "input_sha256": "b3ffbf3d3cd5e3aca605435320a7e58da9be76708117a193c718868a0e40dcaa",
+      "output": "05_increasing_demand.out",
+      "output_sha256": "3d58471f8c3e51b33b5111ed1f2e8dea06bb446668caf1df8ad8c90ffac5026b",
+      "selected_source": "score_optimization/allocations",
+      "score": 2213.187,
+      "status": "validated",
+      "trials": 3
+    },
+    {
+      "input": "06_random.in",
+      "input_sha256": "b62f9f482d8b29f447cedaba2bac90a97de185a437e4a59000b9262973a9763d",
+      "output": "06_random.out",
+      "output_sha256": "39dd558db1f5d7b518c3782931a2972879ed147faa940a4627e5a1233aa00b90",
+      "selected_source": "score_optimization/allocations",
+      "score": 1833.958,
+      "status": "validated",
+      "trials": 3
+    },
+    {
+      "input": "07_random.in",
+      "input_sha256": "ed0fa381e9c49cad9c1853fe0a55e5fc3b85e64cceb61b988fa9c8b67d078570",
+      "output": "07_random.out",
+      "output_sha256": "de5b726ef9fff43464b848c44f5ba725b02a6e16bd8fe868b325f44087c1506e",
+      "selected_source": "score_optimization/allocations",
+      "score": 4983.44,
+      "status": "validated",
+      "trials": 3
+    },
+    {
+      "input": "08_random.in",
+      "input_sha256": "2e58c1365026e85321a2510189f0a21faa6a0ea14277d7b4fe5b8825e2a3bc3e",
+      "output": "08_random.out",
+      "output_sha256": "0d623323ab6b9742147c0d0ce8eeb25929532193bde6a3ab0579d7f1e8fe4895",
+      "selected_source": "output",
+      "score": 10993.142,
+      "status": "validated",
+      "trials": 3
+    },
+    {
+      "input": "09_random.in",
+      "input_sha256": "3d045acd9d3c166419c9fbbd600ad5f4d51bb956d8768755220d6d13a7248f64",
+      "output": "09_random.out",
+      "output_sha256": "af85c7cd5a7ecb09f9d0fee400c2d8937c3f6d4892d59ba55481af97b58816b8",
+      "selected_source": "score_optimization/allocations",
+      "score": 26888.288,
+      "status": "validated",
+      "trials": 3
+    },
+    {
+      "input": "10_random.in",
+      "input_sha256": "4032a22a92a175ab680673c15f08c88cafea2746b281a05f8ed1a2c4c5319db4",
+      "output": "10_random.out",
+      "output_sha256": "d66361fdc9965961aa90f0847dcd29e038fcd67e9c411b56b4c9220bdb61dec2",
+      "selected_source": "score_optimization/allocations",
+      "score": 6041.327000000001,
+      "status": "validated",
+      "trials": 3
+    },
+    {
+      "input": "11_random.in",
+      "input_sha256": "fc4dc490afb734750d08a3cac2bdecea81bb86e55e31cd9429aedc9a3d3dca1e",
+      "output": "11_random.out",
+      "output_sha256": "010027661758d6a59ad5e59246c47d943f449ee6d137a9eaf65b82f89fb5e957",
+      "selected_source": "score_optimization/allocations",
+      "score": 2725.065,
+      "status": "validated",
+      "trials": 3
+    },
+    {
+      "input": "12_random.in",
+      "input_sha256": "215ff6ddb89d3d84397849abf6839fbcadceba2792b00a5b58a29ee950f270ed",
+      "output": "12_random.out",
+      "output_sha256": "ee0539bfe3c96601a18f0cd9dc7be603da1c1fbc3af4bc6829d0620ba8170d81",
+      "selected_source": "score_benchmark",
+      "score": 33095.029,
+      "status": "validated",
+      "trials": 3
+    },
+    {
+      "input": "13_random.in",
+      "input_sha256": "0eb2c9dea1330105c990dc36437e94b304f6639c13384313afae2a3ae5ae40d4",
+      "output": "13_random.out",
+      "output_sha256": "990e4b0a64199d8d68d17b31ddcf9ee56d5bee0c431805e786f5a77bb9b2f230",
+      "selected_source": "score_optimization/allocations",
+      "score": 70170.139,
+      "status": "validated",
+      "trials": 3
+    }
+  ]
+}

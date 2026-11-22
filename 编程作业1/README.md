@@ -1,5 +1,24 @@
 # 多周期需求下的多仓库车辆分配优化
 
+## 当前正式提交与统一展示
+
+`released/` 是当前正式提交目录，包含九份 `.out`、对应的评分报告和 `manifest.json`。
+`publish_results.py` 对原方案、各评分搜索结果和上一次正式提交进行独立复测；
+每轮新建评分器，避免把搜索缓存当作重复实验。以三次中位数比较，挑战方案还需
+在多数对应轮次中优于保留方案；持平时保留旧方案。限时启发式仍无全局最优保证。
+
+```powershell
+python publish_results.py --trials 3 --time-budget 1200
+```
+
+此命令同时生成 `../docs/published.js`，网页评分模式和 Streamlit 的正式提交模式
+均读取本次发布结果。历史 `output/` 及 `docs/data.js` 仍用于历史滚动验证，不混用其成本。
+新增回归测试运行 `python verify_improvements.py`。
+
+搜索阶段可用 `--time-budget 300` 限制整轮评分求解预算，最终独立复测次数由
+`--score-trials` 控制（默认 3）。超时会保留合法的参考分配，并明确标为未完成复测，
+成本不会伪造为 0。新的搜索结果需经过发布流程后才进入正式提交。
+
 ## 按 getScore.py 优化
 
 使用 Python 3.11 或以上版本，在本目录运行：
@@ -11,7 +30,7 @@ python solve.py --objective getscore --score-polish --incumbent-dir score_output
 
 已发布的 `.out` 文件及评分对比保存在 `score_output/`，上面的命令将重新搜索的结果写到 `score_regenerated/`。`output/` 提供原仓库方案，`--incumbent-dir` 指定本轮也要复评的上一次方案。可用 `--baseline-dir` 指定其他原始对照目录，用 `--file` 处理单个输入。
 
-这个模式用每位客户的全历史平均需求，分别求解各仓库允许跳过客户的容量车辆路径问题。漏服务罚分为仓库到客户单程欧氏距离的 2 倍。需求和车容量同时乘以历史期数，精确保留平均需求的分数部分。PyVRP 内部距离和罚分按 1000 倍取整，报告分数用原始欧氏距离重新计算。
+这个模式用每位客户的全历史平均需求，分别求解各仓库允许跳过客户的容量车辆路径问题。漏服务罚分为仓库到客户单程欧氏距离的 2 倍。需求和车容量同时乘以历史期数，精确保留平均需求的分数部分。距离和罚分按 1000 倍取整，搜索、算法比较、最终选优统一使用 res.cost()/1000。它是旧附件的兼容参考成本；原附件接口仍需版本桥接。
 
 同载重车辆用动态规划搜索各仓库的车辆数。两个仓库的异构车队在组合数较小时枚举载重分配，其余实例从多个初始方案搜索跨仓移动和交换。逐仓缓存相同容量组合的成本。先用短时限筛选，再按提交文件的车辆编号顺序录入车型，对最终候选和原方案按每仓 3 秒复评。若原方案得分最低，则保留原方案。评分依赖 PyVRP 版本与墙钟时限，复跑时数值可能波动。
 
@@ -44,17 +63,17 @@ python compare_algorithms.py --wide-local --file input_data/13_random.in --outpu
 
 ## 运行历史模式
 
-默认求解只依赖 NumPy。在本目录执行：
+历史模式只依赖 NumPy，需要显式选择。在本目录执行：
 
 ```powershell
 python -m pip install -r requirements.txt
-python solve.py --output-dir regenerated
+python solve.py --objective historical --output-dir regenerated
 python verify.py
 ```
 
 `output/` 内包含九个历史模式分配文件、各实例的 JSON 运行记录和汇总 CSV。
 `regenerated/` 可用于核对重新生成的结果。
-单个实例可用 `python solve.py --file input_data/10_random.in --output-dir single`。
+单个历史实例可用 `python solve.py --objective historical --file input_data/10_random.in --output-dir single`。
 `example_tutorial.out` 是课件给出的格式示例。
 
 ## 历史模式的模型与代价

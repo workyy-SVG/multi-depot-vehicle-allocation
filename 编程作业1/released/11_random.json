@@ -1,0 +1,116 @@
+{
+  "input": "11_random.in",
+  "input_sha256": "fc4dc490afb734750d08a3cac2bdecea81bb86e55e31cd9429aedc9a3d3dca1e",
+  "objective": "getscore",
+  "penalty_multiplier": 2,
+  "distance_scale": 1000,
+  "allocation": [
+    [
+      3,
+      5,
+      7
+    ],
+    [
+      0,
+      1,
+      2,
+      4,
+      6,
+      8
+    ]
+  ],
+  "capacities": [
+    300,
+    600
+  ],
+  "declared_customer_counts": [
+    160,
+    200
+  ],
+  "ignored_trailing_records": 0,
+  "periods": 50,
+  "selected_source": "score_optimization/allocations",
+  "score": 2725.065,
+  "validation": {
+    "selected": "score_optimization/allocations",
+    "allocation": [
+      [
+        3,
+        5,
+        7
+      ],
+      [
+        0,
+        1,
+        2,
+        4,
+        6,
+        8
+      ]
+    ],
+    "candidates": [
+      {
+        "name": "score_optimization/allocations",
+        "scores": [
+          2713.902,
+          2733.901,
+          2725.065
+        ],
+        "median": 2725.065,
+        "minimum": 2713.902,
+        "maximum": 2733.901
+      },
+      {
+        "name": "score_output",
+        "scores": [
+          2713.902,
+          2733.901,
+          2725.065
+        ],
+        "median": 2725.065,
+        "minimum": 2713.902,
+        "maximum": 2733.901
+      },
+      {
+        "name": "score_benchmark",
+        "scores": [
+          2713.902,
+          2733.901,
+          2725.065
+        ],
+        "median": 2725.065,
+        "minimum": 2713.902,
+        "maximum": 2733.901
+      },
+      {
+        "name": "output",
+        "scores": [
+          2713.902,
+          2733.901,
+          2725.065
+        ],
+        "median": 2725.065,
+        "minimum": 2713.902,
+        "maximum": 2733.901
+      }
+    ],
+    "trials": 3,
+    "seconds_per_depot": 3.0,
+    "seed": 0,
+    "objective": "getscore",
+    "distance_scale": 1000,
+    "penalty_multiplier": 2,
+    "profile": {
+      "preprocess_seconds": 0.02312329999404028,
+      "model_seconds": 0.002298600011272356,
+      "solve_seconds": 18.087077700009104,
+      "solver_calls": 6
+    },
+    "elapsed_seconds": 18.11458630001289,
+    "status": "validated"
+  },
+  "environment": {
+    "pyvrp": "0.12.2",
+    "numpy": "2.5.5"
+  }
+}

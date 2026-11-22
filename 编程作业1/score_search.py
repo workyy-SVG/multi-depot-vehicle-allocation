@@ -5,6 +5,7 @@ from functools import lru_cache
 from itertools import product
 from math import prod
 from random import Random
+from time import perf_counter
 
 import numpy as np
 from pyvrp import Client, Depot, ProblemData, VehicleType, solve as route_solve
@@ -18,9 +19,12 @@ PENALTY_MULTIPLIER = 2
 
 
 class ScoreEvaluator:
-    def __init__(self, data):
+    def __init__(self, data, *, seed=0):
         from solve import distances
 
+        started = perf_counter()
+        self.seed = seed
+        self.profile = dict(model_seconds=0.0, solve_seconds=0.0, solver_calls=0)
         self.capacities = data['caps']
         self.periods = data['T']
         self.depots = []
@@ -36,27 +40,29 @@ class ScoreEvaluator:
             self.depots.append((Depot(*depot), clients, matrix, costs, np.zeros_like(costs),
                                 float(penalty.sum())))
         self.cost = lru_cache(maxsize=None)(self.cost)
+        self.profile['preprocess_seconds'] = perf_counter() - started
 
     def fleet(self, vehicles):
         return tuple(sorted(self.capacities[v] for v in vehicles))
 
     def cost(self, depot, fleet, seconds):
-        location, clients, matrix, costs, durations, drop_all = self.depots[depot]
+        location, clients, _, costs, durations, drop_all = self.depots[depot]
         if not fleet or not clients:
             return drop_all
+        started = perf_counter()
         vehicle_types = [VehicleType(capacity=[cap * self.periods]) for cap in fleet]
         problem = ProblemData(clients, [location], vehicle_types, [costs], [durations])
-        result = route_solve(problem, MaxRuntime(seconds), collect_stats=False)
+        self.profile['model_seconds'] += perf_counter() - started
+        started = perf_counter()
+        result = route_solve(problem, MaxRuntime(seconds), seed=self.seed,
+                             collect_stats=False, display=False)
+        self.profile['solve_seconds'] += perf_counter() - started
+        self.profile['solver_calls'] += 1
         if not result.best.is_feasible():
             return drop_all if seconds < 3 else float('inf')
 
-        served = np.zeros(len(clients) + 1, dtype=bool)
-        travel = 0.0
-        for route in result.best.routes():
-            visits = route.visits()
-            served[visits] = True
-            travel += matrix[[0, *visits], [*visits, 0]].sum()
-        return float(travel + PENALTY_MULTIPLIER * matrix[0, ~served].sum())
+        # All search, comparison and publication paths use the same integer units.
+        return float(result.cost() / DISTANCE_SCALE)
 
     def score(self, allocation, seconds, *, output_order=False):
         total = 0.0
@@ -219,7 +225,8 @@ def recheck_neighbors(evaluator, allocation, seconds):
                key=lambda candidate: evaluator.score(candidate, 3.0, output_order=True))
 
 
-def optimize(data, seeds, reference, rounds, search_seconds, *, incumbent=None, polish=False):
+def optimize(data, seeds, reference, rounds, search_seconds, *, incumbent=None, polish=False,
+             validation_trials=3, validation_report=None):
     evaluator = ScoreEvaluator(data)
     if incumbent is None:
         incumbent = reference
@@ -247,10 +254,15 @@ def optimize(data, seeds, reference, rounds, search_seconds, *, incumbent=None, 
             shortlisted = sorted(shortlisted[:16],
                                  key=lambda allocation: evaluator.score(allocation, 0.65, output_order=True))
         shortlisted = shortlisted[:8 if polish else 6]
-    finalists = [incumbent, reference, *shortlisted]
-    scores = [evaluator.score(allocation, 3.0, output_order=True) for allocation in finalists]
-    winner = min(range(len(scores)), key=scores.__getitem__)
-    if recombine and winner == 0:
-        final = recheck_neighbors(evaluator, incumbent, search_seconds)
-        return final, scores[1], scores[0], evaluator.score(final, 3.0, output_order=True)
-    return finalists[winner], scores[1], scores[0], scores[winner]
+    # Limit the expensive validation set, while always retaining both references.
+    shortlisted.sort(key=lambda allocation: evaluator.score(allocation, 0.65, output_order=True))
+    from validation import validate_candidates
+    candidates = {'incumbent': incumbent, 'reference': reference}
+    candidates.update({f'search_{i + 1}': groups for i, groups in enumerate(shortlisted[:2])})
+    checked = validate_candidates(data, candidates, trials=validation_trials)
+    checked['search_profile'] = dict(evaluator.profile)
+    if validation_report is not None:
+        validation_report.update(checked)
+    medians = {row['name']: row['median'] for row in checked['candidates']}
+    return (checked['allocation'], medians['reference'], medians['incumbent'],
+            medians[checked['selected']])

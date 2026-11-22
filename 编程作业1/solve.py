@@ -18,7 +18,9 @@ def read_instance(path):
     d, v, t = map(int, lines[0].split())
     caps = list(map(int, lines[1].split()))
     counts = list(map(int, lines[2].split()))
-    assert len(caps) == v and len(counts) == d and min(caps) > 0
+    if (min(d, v, t) < 1 or len(caps) != v or len(counts) != d or
+            min(caps, default=0) <= 0 or any(n < 0 for n in counts)):
+        raise ValueError(f'Invalid instance header: {path}')
     depots = np.array([list(map(float, x.split())) for x in lines[3:3+d]])
     coords, hist, pos = [], [], 3+d
     for n in counts:
@@ -260,8 +262,8 @@ def evaluate(data, hist, allocations, mats, periods, milliseconds):
 
 
 def check_allocation(data, allocation):
-    assert len(allocation) == data['D']
-    assert sorted(v for group in allocation for v in group) == list(range(data['V']))
+    if len(allocation) != data['D'] or sorted(v for group in allocation for v in group) != list(range(data['V'])):
+        raise ValueError('Each vehicle must be assigned exactly once to a valid depot.')
 
 
 def sample_periods(start, stop, count):
@@ -269,8 +271,8 @@ def sample_periods(start, stop, count):
 
 
 def write_allocation(path, allocation):
-    path.write_text('\n'.join(' '.join(map(str, [len(ids)] + sorted(ids))) for ids in allocation) + '\n',
-                    encoding='utf-8')
+    from result_files import atomic_text
+    atomic_text(path, '\n'.join(' '.join(map(str, [len(ids)] + sorted(ids))) for ids in allocation) + '\n')
 
 
 def read_allocation(path, data):
@@ -284,6 +286,7 @@ def read_allocation(path, data):
 
 def solve_for_score(path, outdir, args):
     from score_search import optimize
+    from result_files import atomic_json, score_report
 
     data = read_instance(path)
     seeds = [baseline(data, data['hist'], kind) for kind in ('balanced', 'mean', 'risk')]
@@ -294,12 +297,16 @@ def solve_for_score(path, outdir, args):
         incumbent_file = pathlib.Path(args.incumbent_dir) / reference_file.name
         if incumbent_file.is_file():
             incumbent = read_allocation(incumbent_file, data)
+    validation = {}
     final, before, incumbent_score, after = optimize(
         data, [reference, *seeds], reference, args.rounds, args.score_search_ms / 1000,
         incumbent=incumbent, polish=args.score_polish,
+        validation_trials=args.score_trials, validation_report=validation,
     )
     check_allocation(data, final)
     write_allocation(outdir / (path.stem + '.out'), final)
+    atomic_json(outdir / (path.stem + '.json'),
+                score_report(path, data, final, validation=validation))
     print(f'{path.name}: baseline {before:.4f}, incumbent {incumbent_score:.4f}, final {after:.4f}',
           flush=True)
     source = 'balanced'
@@ -368,13 +375,18 @@ def main():
     p.add_argument('--input-dir',default=str(HERE/'input_data'))
     p.add_argument('--output-dir')
     p.add_argument('--file',help='Optional single .in file')
-    p.add_argument('--objective', choices=('historical', 'getscore'), default='historical')
+    p.add_argument('--objective', choices=('historical', 'getscore'), default='getscore',
+                   help='getscore is the submission target; historical is a separate validation model')
     p.add_argument('--baseline-dir', default='output', help='Reference allocations for getscore')
     p.add_argument('--incumbent-dir', help='Keep stronger allocations from an earlier getscore run')
     p.add_argument('--score-polish', action='store_true',
                    help='Recombine scored fleets and rerank a wider shortlist')
     p.add_argument('--score-search-ms', type=int, default=30,
-                   help='Routing milliseconds per depot fleet in the first getscore pass')
+                   help='Native solver stopping target per depot; not a total wall-clock limit')
+    p.add_argument('--score-trials', type=int, default=3,
+                   help='Independent final validation trials; default 3')
+    p.add_argument('--time-budget', type=float,
+                   help='Shared solver wall-clock budget in seconds for this getscore run')
     p.add_argument('--cp-sat', action='store_true', help='Add a CP-SAT seed to the final fit')
     p.add_argument('--train-periods', type=int, default=4)
     p.add_argument('--rounds', type=int, help='Fleet search rounds (historical: 2, getscore: 5)')
@@ -393,16 +405,54 @@ def main():
         p.error('period counts, scenarios and offsets must be positive; rounds must be nonnegative')
     if args.score_search_ms < 1:
         p.error('--score-search-ms must be positive')
+    if args.score_trials < 1 or (args.time_budget is not None and args.time_budget <= 0):
+        p.error('score trials and time budget must be positive')
+    if args.time_budget is not None and args.objective != 'getscore':
+        p.error('--time-budget applies to getscore; use --seconds for the historical CP-SAT subproblem')
     out.mkdir(parents=True, exist_ok=True)
     if args.objective == 'getscore':
+        from runtime_control import RuntimeBudget, BudgetExpired
+        from result_files import atomic_json, score_report
+        import shutil
         args.baseline_dir = str(HERE / args.baseline_dir)
+        if args.incumbent_dir:
+            args.incumbent_dir = str(HERE / args.incumbent_dir)
+        budget = RuntimeBudget(args.time_budget)
+        incomplete = False
         with (out / 'comparison.csv').open('w', encoding='utf-8-sig', newline='') as f:
             writer = csv.writer(f)
             writer.writerow(['input', 'reference', 'baseline_score', 'optimized_score', 'reduction',
-                             'incumbent_score', 'reduction_vs_incumbent'])
+                             'incumbent_score', 'reduction_vs_incumbent', 'status'])
             for path in files:
-                writer.writerow(solve_for_score(path, out, args))
+                if args.time_budget is None:
+                    row = (*solve_for_score(path, out, args), 'validated')
+                else:
+                    data = read_instance(path)
+                    fallback_files = [pathlib.Path(folder)/(path.stem+'.out')
+                                      for folder in (args.incumbent_dir, args.baseline_dir) if folder]
+                    fallback_file = next((p for p in fallback_files if p.is_file()), None)
+                    fallback = (read_allocation(fallback_file, data) if fallback_file
+                                else baseline(data, data['hist'], 'mean'))
+                    fallback_source = str(fallback_file) if fallback_file else 'mean_greedy'
+                    write_allocation(out / (path.stem + '.out'), fallback)
+                    atomic_json(out / (path.stem + '.json'),
+                                score_report(path, data, fallback, source=fallback_source))
+                    stage = out / '_work' / path.stem
+                    stage.mkdir(parents=True, exist_ok=True)
+                    try:
+                        result = budget.run(solve_for_score, path, stage, args)
+                    except BudgetExpired:
+                        incomplete = True
+                        print(f'{path.name}: budget exhausted; retained feasible fallback (unvalidated).', flush=True)
+                        row = (path.name, fallback_source, None, None, None, None, None, 'budget_exhausted')
+                    else:
+                        for suffix in ('.out', '.json'):
+                            shutil.copyfile(stage / (path.stem + suffix), out / (path.stem + suffix))
+                        row = (*result, 'validated')
+                writer.writerow(row)
                 f.flush()
+        if incomplete:
+            raise SystemExit(2)
         return
     reports = [solve(path, out, args) for path in files]
     with (out / 'comparison.csv').open('w', encoding='utf-8-sig', newline='') as f:
