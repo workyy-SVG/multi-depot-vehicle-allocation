@@ -27,7 +27,7 @@ class GraderEvaluator(ScoreEvaluator):
 def ranked(evaluator, candidates, seconds, keep):
     distinct = {}
     for candidate in candidates:
-        fleet = tuple(tuple(evaluator.capacities[v] for v in sorted(ids)) for ids in candidate)
+        fleet = tuple(tuple(evaluator.capacities[v] for v in ids) for ids in candidate)
         distinct.setdefault(fleet, candidate)
     return sorted(distinct.values(),
                   key=lambda candidate: evaluator.score(candidate, seconds, output_order=True))[:keep]

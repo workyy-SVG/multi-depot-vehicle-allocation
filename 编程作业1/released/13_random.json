@@ -6,38 +6,38 @@
   "distance_scale": 1000,
   "allocation": [
     [
-      18,
-      20,
+      3,
+      1,
       23
     ],
     [
-      2,
-      8,
-      10,
-      19,
       22,
+      2,
       25,
-      26
+      7,
+      26,
+      10,
+      8
     ],
     [
-      1,
-      7,
+      18,
+      19,
       11,
       27,
       28
     ],
     [
       4,
+      29,
+      16,
       5,
       13,
-      16,
-      21,
-      29
+      21
     ],
     [
       0,
-      3,
       6,
+      20,
       9,
       12,
       14,
@@ -62,44 +62,44 @@
   ],
   "ignored_trailing_records": 155,
   "periods": 100,
-  "selected_source": "score_optimization/allocations",
-  "score": 70170.139,
+  "selected_source": "deep_candidates/portfolio",
+  "score": 64756.028000000006,
   "validation": {
-    "selected": "score_optimization/allocations",
+    "selected": "deep_candidates/portfolio",
     "allocation": [
       [
-        18,
-        20,
+        3,
+        1,
         23
       ],
       [
-        2,
-        8,
-        10,
-        19,
         22,
+        2,
         25,
-        26
+        7,
+        26,
+        10,
+        8
       ],
       [
-        1,
-        7,
+        18,
+        19,
         11,
         27,
         28
       ],
       [
         4,
+        29,
+        16,
         5,
         13,
-        16,
-        21,
-        29
+        21
       ],
       [
         0,
-        3,
         6,
+        20,
         9,
         12,
         14,
@@ -110,48 +110,37 @@
     ],
     "candidates": [
       {
-        "name": "score_optimization/allocations",
+        "name": "released",
         "scores": [
-          70170.139,
-          64321.888000000006,
-          80440.934
+          70903.863,
+          65542.367,
+          65241.100999999995
         ],
-        "median": 70170.139,
-        "minimum": 64321.888000000006,
-        "maximum": 80440.934
+        "median": 65542.367,
+        "minimum": 65241.100999999995,
+        "maximum": 70903.863
       },
       {
-        "name": "score_output",
+        "name": "deep_candidates/order",
         "scores": [
-          94037.976,
-          68114.288,
-          89524.05500000001
+          65803.982,
+          64738.411,
+          64771.359000000004
         ],
-        "median": 89524.05500000001,
-        "minimum": 68114.288,
-        "maximum": 94037.976
+        "median": 64771.359000000004,
+        "minimum": 64738.411,
+        "maximum": 65803.982
       },
       {
-        "name": "score_benchmark",
+        "name": "deep_candidates/portfolio",
         "scores": [
-          89230.426,
-          66711.95599999999,
-          91749.967
+          64756.028000000006,
+          65322.214,
+          64720.67600000001
         ],
-        "median": 89230.426,
-        "minimum": 66711.95599999999,
-        "maximum": 91749.967
-      },
-      {
-        "name": "output",
-        "scores": [
-          78018.62,
-          68085.636,
-          87175.337
-        ],
-        "median": 78018.62,
-        "minimum": 68085.636,
-        "maximum": 87175.337
+        "median": 64756.028000000006,
+        "minimum": 64720.67600000001,
+        "maximum": 65322.214
       }
     ],
     "trials": 3,
@@ -161,12 +150,12 @@
     "distance_scale": 1000,
     "penalty_multiplier": 2,
     "profile": {
-      "preprocess_seconds": 0.05813070002477616,
-      "model_seconds": 0.02504960002261214,
-      "solve_seconds": 145.3314269000257,
-      "solver_calls": 48
+      "preprocess_seconds": 0.0758351999684237,
+      "model_seconds": 0.01093270001001656,
+      "solve_seconds": 81.56845920006162,
+      "solver_calls": 27
     },
-    "elapsed_seconds": 145.43016039999202,
+    "elapsed_seconds": 81.66314960000454,
     "status": "validated"
   },
   "environment": {

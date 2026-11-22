@@ -1,0 +1,127 @@
+{
+  "objective": "getscore_cost_lower_is_better",
+  "trials": 3,
+  "seconds_per_depot": 3.0,
+  "seed": 0,
+  "pyvrp": "0.12.2",
+  "scoring_bridge": "score_optimization/score_attachment.py",
+  "original_reference_commit": "bd49f6693cab10a0f232c1e98d06655e84d36d47",
+  "paired_attachment_check": {
+    "before_total": 170283.291,
+    "after_total": 163973.441,
+    "before_mean": 18920.365666666665,
+    "after_mean": 18219.27122222222,
+    "saved": 6309.850000000006,
+    "reduction_percent": 3.7055015574017807,
+    "validation_before_total": 153148.984,
+    "validation_after_total": 146553.652
+  },
+  "updated_cases": [
+    {
+      "instance": "08_random",
+      "before": {
+        "name": "released",
+        "scores": [
+          10993.142,
+          10978.682,
+          10978.682
+        ],
+        "median": 10978.682,
+        "minimum": 10978.682,
+        "maximum": 10993.142
+      },
+      "selected": {
+        "name": "deep_candidates/count",
+        "scores": [
+          10338.418,
+          10338.418,
+          10338.418
+        ],
+        "median": 10338.418,
+        "minimum": 10338.418,
+        "maximum": 10338.418
+      },
+      "reduction_percent": 5.831884009392029
+    },
+    {
+      "instance": "09_random",
+      "before": {
+        "name": "released",
+        "scores": [
+          25735.929,
+          25825.222999999998,
+          23746.862
+        ],
+        "median": 25735.929,
+        "minimum": 23746.862,
+        "maximum": 25825.222999999998
+      },
+      "selected": {
+        "name": "deep_candidates/order",
+        "scores": [
+          24746.915,
+          24700.474000000002,
+          26947.636
+        ],
+        "median": 24746.915,
+        "minimum": 24700.474000000002,
+        "maximum": 26947.636
+      },
+      "reduction_percent": 3.8429310245610298
+    },
+    {
+      "instance": "12_random",
+      "before": {
+        "name": "released",
+        "scores": [
+          33095.029,
+          33095.029,
+          31396.192000000003
+        ],
+        "median": 33095.029,
+        "minimum": 31396.192000000003,
+        "maximum": 33095.029
+      },
+      "selected": {
+        "name": "deep_candidates/order",
+        "scores": [
+          28915.314000000002,
+          32481.965,
+          28915.314000000002
+        ],
+        "median": 28915.314000000002,
+        "minimum": 28915.314000000002,
+        "maximum": 32481.965
+      },
+      "reduction_percent": 12.629434468844247
+    },
+    {
+      "instance": "13_random",
+      "before": {
+        "name": "released",
+        "scores": [
+          70903.863,
+          65542.367,
+          65241.100999999995
+        ],
+        "median": 65542.367,
+        "minimum": 65241.100999999995,
+        "maximum": 70903.863
+      },
+      "selected": {
+        "name": "deep_candidates/portfolio",
+        "scores": [
+          64756.028000000006,
+          65322.214,
+          64720.67600000001
+        ],
+        "median": 64756.028000000006,
+        "minimum": 64720.67600000001,
+        "maximum": 65322.214
+      },
+      "reduction_percent": 1.199741535120318
+    }
+  ],
+  "same_output_policy": "Unchanged allocations use one common measurement in the paired table.",
+  "note": "Time-limited heuristic costs are measurements, not a course percentage or global optimum proof."
+}

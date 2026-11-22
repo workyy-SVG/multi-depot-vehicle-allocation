@@ -41,7 +41,7 @@ def read_allocation(path, depots, vehicles):
     rows = [tuple(map(int, row.split())) for row in path.read_text().splitlines()]
     if len(rows) != depots or any(not row or row[0] != len(row) - 1 for row in rows):
         raise ValueError(f"Invalid depot rows in {path}")
-    groups = tuple(tuple(sorted(row[1:])) for row in rows)
+    groups = tuple(tuple(row[1:]) for row in rows)
     if sorted(v for group in groups for v in group) != list(range(vehicles)):
         raise ValueError(f"Each vehicle must appear once in {path}")
     return groups

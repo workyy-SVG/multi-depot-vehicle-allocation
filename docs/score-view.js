@@ -10,7 +10,9 @@ function scoreSourceLabel(name, index=0) {
   const names = {'output':'原方案','score_output':'评分搜索',
     'score_benchmark':'组合搜索','score_optimization/allocations':'改进方案',
     'released':'上次正式提交','incumbent':'上次方案','reference':'原方案',
-    'mean_greedy':'需求均值分配'};
+    'mean_greedy':'需求均值分配','deep_candidates/order':'车型顺序优化',
+    'deep_candidates/count':'车辆数优化','deep_candidates/pool':'路线池联合搜索',
+    'deep_candidates/portfolio':'实测车队重组'};
   return names[name] || '候选方案 '+(index+1);
 }
 function publishedEntries() {
@@ -93,10 +95,11 @@ function renderScoreAnswer() {
     answer.textContent=scoreSourceLabel(ranked[0].name,entries.indexOf(ranked[0]))+'的复测中位数最低，为 '+scoreFormatter.format(ranked[0].median)+
       '。正式提交还要求相对保留方案在多数轮次中更好。';
   } else if (activeQuestion===1) {
-    const original = entries.find(row=>row.name==='output');
+    const original = entries.find(row=>row.name==='output') || entries.find(row=>row.name==='released');
     const difference = original && selected ? original.median-selected.median : null;
     answer.textContent=difference===null?'本轮没有原方案的完整对照数据。':
-      '正式提交相对原方案的成本'+(difference>=0?'减少 ':'增加 ')+scoreFormatter.format(Math.abs(difference))+'。';
+      '正式提交相对'+scoreSourceLabel(original.name,entries.indexOf(original))+'的成本'+
+      (difference>=0?'减少 ':'增加 ')+scoreFormatter.format(Math.abs(difference))+'。';
   } else {
     answer.textContent=ranked.map(row=>scoreSourceLabel(row.name,entries.indexOf(row))+' '+scoreFormatter.format(row.median)).join('；')+
       '。这些是同一目标下的独立复测结果。';

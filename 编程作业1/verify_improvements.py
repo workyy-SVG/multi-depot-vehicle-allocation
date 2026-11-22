@@ -104,7 +104,7 @@ class Improvements(unittest.TestCase):
         from verify_release import verify
         self.assertEqual(verify(out, self.work, web), 1)
         # Detect a modified webpage instead of merely rechecking generated values.
-        records['unseen_single']['allocation'] = [[1, 0]]
+        records['unseen_single']['allocation'][0].reverse()
         web.write_text('const publishedResults = '+json.dumps(records)+';', encoding='utf-8')
         with self.assertRaises(ValueError):
             verify(out, self.work, web)
@@ -144,6 +144,27 @@ class Improvements(unittest.TestCase):
         self.assertIsNone(report['score'])
         self.assertEqual(report['validation']['status'], 'budget_exhausted')
         solve.read_allocation(out/'unseen_single.out', solve.read_instance(self.input))
+
+    def test_partial_publication_keeps_other_verified_cases(self):
+        second = self.work/'another_case.in'
+        second.write_bytes(self.input.read_bytes())
+        out, web = self.work/'partial', self.work/'partial.js'
+        publish([self.input, second], out, [], trials=1, seconds=0.02, web_data=web)
+        before = (out/'another_case.out').read_bytes()
+        manifest = publish([self.input], out, [], trials=1, seconds=0.02, web_data=web)
+        self.assertEqual(len(manifest['cases']), 2)
+        self.assertEqual(manifest['retained_cases'], ['another_case'])
+        self.assertEqual((out/'another_case.out').read_bytes(), before)
+        from verify_release import verify
+        self.assertEqual(verify(out, self.work, web), 2)
+
+    def test_output_order_matches_the_supplied_grader(self):
+        data = dict(caps=[2, 3], T=2, coords=[np.array([[1, 0]])],
+                    depots=[np.array([0, 0])], hist=[np.array([[1, 1]])])
+        evaluator = ScoreEvaluator(data)
+        with patch.object(evaluator, 'cost', return_value=0) as route_cost:
+            evaluator.score([[1, 0]], 0.02, output_order=True)
+        route_cost.assert_called_once_with(0, (3, 2), 0.02)
 
 
 if __name__ == '__main__':

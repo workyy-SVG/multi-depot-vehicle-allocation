@@ -28,10 +28,32 @@ def frontend_record(report):
 
 def publish(paths, outdir, candidate_dirs, *, trials=3, seconds=3.0,
             time_budget=None, web_data=None):
+    paths = [Path(path) for path in paths]
+    target_names = {path.stem for path in paths}
+    if len(target_names) != len(paths):
+        raise ValueError('Input stems must be unique within a publication.')
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     budget = RuntimeBudget(time_budget)
-    records, manifest = {}, []
+    records, cases = {}, {}
+    retained = []
+    previous_manifest = outdir/'manifest.json'
+    if previous_manifest.is_file():
+        previous = json.loads(previous_manifest.read_text(encoding='utf-8'))
+        for case in previous['cases']:
+            name = Path(case['input']).stem
+            if name in target_names:
+                continue
+            report = json.loads((outdir/(name+'.json')).read_text(encoding='utf-8'))
+            if hashlib.sha256((outdir/case['output']).read_bytes()).hexdigest() != case['output_sha256']:
+                raise ValueError(f'Previously published output was modified: {name}')
+            validation = report['validation']
+            if validation['status'] == 'validated' and (
+                    validation['trials'] != trials or validation['seconds_per_depot'] != seconds):
+                raise ValueError('Republish all cases when changing validation trials or runtime.')
+            records[name] = frontend_record(report)
+            cases[name] = case
+            retained.append(name)
     started = perf_counter()
     for path in paths:
         path = Path(path)
@@ -52,7 +74,7 @@ def publish(paths, outdir, candidate_dirs, *, trials=3, seconds=3.0,
         fallback_source = next(iter(candidates))
         allocation = candidates[fallback_source]
         # Always leave a legal .out even if a native solver exceeds the deadline.
-        write_allocation(outdir / (path.stem + '.out'), allocation)
+        write_allocation(outdir / (path.stem + '.out'), allocation, preserve_order=True)
         try:
             checked = budget.run(_validate_file, path, candidates, trials, seconds)
         except BudgetExpired:
@@ -64,20 +86,22 @@ def publish(paths, outdir, candidate_dirs, *, trials=3, seconds=3.0,
             report = score_report(path, data, allocation, validation=checked)
             print(f'{path.name}: {checked["selected"]}, median={report["score"]:.3f}, trials={trials}', flush=True)
         output_path = outdir / (path.stem + '.out')
-        write_allocation(output_path, allocation)
+        write_allocation(output_path, allocation, preserve_order=True)
         atomic_json(outdir / (path.stem + '.json'), report)
         records[path.stem] = frontend_record(report)
-        manifest.append(dict(input=path.name, input_sha256=report['input_sha256'],
+        cases[path.stem] = dict(input=path.name, input_sha256=report['input_sha256'],
                              output=output_path.name,
                              output_sha256=hashlib.sha256(output_path.read_bytes()).hexdigest(),
                              selected_source=report['selected_source'], score=report['score'],
                              status=report['validation']['status'],
-                             trials=report['validation'].get('trials', 0)))
+                             trials=report['validation'].get('trials', 0))
+    manifest = [cases[name] for name in sorted(cases)]
     complete = all(row['status'] == 'validated' for row in manifest)
     summary = dict(schema_version=1, objective='getscore', penalty_multiplier=2,
                    distance_scale=1000, seconds_per_depot=seconds,
                    requested_trials=trials, time_budget=time_budget,
                    elapsed_seconds=perf_counter() - started, complete=complete,
+                   updated_cases=sorted(target_names), retained_cases=retained,
                    cases=manifest)
     atomic_json(outdir / 'manifest.json', summary)
     if web_data:

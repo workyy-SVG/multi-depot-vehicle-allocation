@@ -9,15 +9,15 @@
       2,
       3,
       4,
-      5,
-      6
+      6,
+      5
     ],
     [
-      0,
       1,
-      7,
       8,
-      9
+      0,
+      9,
+      7
     ]
   ],
   "capacities": [
@@ -30,51 +30,29 @@
   ],
   "ignored_trailing_records": 200,
   "periods": 100,
-  "selected_source": "score_benchmark",
-  "score": 33095.029,
+  "selected_source": "deep_candidates/order",
+  "score": 28915.314000000002,
   "validation": {
-    "selected": "score_benchmark",
+    "selected": "deep_candidates/order",
     "allocation": [
       [
         2,
         3,
         4,
-        5,
-        6
+        6,
+        5
       ],
       [
-        0,
         1,
-        7,
         8,
-        9
+        0,
+        9,
+        7
       ]
     ],
     "candidates": [
       {
-        "name": "score_optimization/allocations",
-        "scores": [
-          35342.159999999996,
-          33436.426999999996,
-          35342.159999999996
-        ],
-        "median": 35342.159999999996,
-        "minimum": 33436.426999999996,
-        "maximum": 35342.159999999996
-      },
-      {
-        "name": "score_output",
-        "scores": [
-          35342.159999999996,
-          33436.426999999996,
-          35342.159999999996
-        ],
-        "median": 35342.159999999996,
-        "minimum": 33436.426999999996,
-        "maximum": 35342.159999999996
-      },
-      {
-        "name": "score_benchmark",
+        "name": "released",
         "scores": [
           33095.029,
           33095.029,
@@ -85,15 +63,26 @@
         "maximum": 33095.029
       },
       {
-        "name": "output",
+        "name": "deep_candidates/order",
         "scores": [
-          70231.261,
-          70231.261,
-          70231.261
+          28915.314000000002,
+          32481.965,
+          28915.314000000002
         ],
-        "median": 70231.261,
-        "minimum": 70231.261,
-        "maximum": 70231.261
+        "median": 28915.314000000002,
+        "minimum": 28915.314000000002,
+        "maximum": 32481.965
+      },
+      {
+        "name": "deep_candidates/portfolio",
+        "scores": [
+          28915.314000000002,
+          32481.965,
+          28915.314000000002
+        ],
+        "median": 28915.314000000002,
+        "minimum": 28915.314000000002,
+        "maximum": 32481.965
       }
     ],
     "trials": 3,
@@ -103,12 +92,12 @@
     "distance_scale": 1000,
     "penalty_multiplier": 2,
     "profile": {
-      "preprocess_seconds": 0.09100459999172017,
-      "model_seconds": 0.023400300065986812,
-      "solve_seconds": 55.90977699990617,
-      "solver_calls": 18
+      "preprocess_seconds": 0.07289600002695806,
+      "model_seconds": 0.012879199988674372,
+      "solve_seconds": 37.00855299999239,
+      "solver_calls": 12
     },
-    "elapsed_seconds": 56.03053799999179,
+    "elapsed_seconds": 37.09825640000054,
     "status": "validated"
   },
   "environment": {

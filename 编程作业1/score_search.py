@@ -68,7 +68,7 @@ class ScoreEvaluator:
         total = 0.0
         for depot, vehicles in enumerate(allocation):
             # The scorer creates vehicle types in the order of IDs in the .out file.
-            fleet = (tuple(self.capacities[v] for v in sorted(vehicles))
+            fleet = (tuple(self.capacities[v] for v in vehicles)
                      if output_order else self.fleet(vehicles))
             total += self.cost(depot, fleet, seconds)
         return total
@@ -245,7 +245,7 @@ def optimize(data, seeds, reference, rounds, search_seconds, *, incumbent=None, 
 
     distinct = {}
     for allocation in [reference, incumbent, *shortlisted]:
-        key = tuple(tuple(evaluator.capacities[v] for v in sorted(ids)) for ids in allocation)
+        key = tuple(tuple(evaluator.capacities[v] for v in ids) for ids in allocation)
         distinct.setdefault(key, allocation)
     shortlisted = list(distinct.values())
     if len(shortlisted) > 12:

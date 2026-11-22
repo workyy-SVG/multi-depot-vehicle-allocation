@@ -538,7 +538,7 @@ dataset.value = '10_random';
 resultMode.value = Object.keys(publishedResults).length ? 'getscore' : 'historical';
 function renderQuestions() {
 const displayedQuestions = scoreModeActive() ? [
-  '哪个方案复测成本最低？','正式提交比原方案节省多少？','各方案复测结果如何？',
+  '哪个方案复测成本最低？','正式提交比对照方案节省多少？','各方案复测结果如何？',
   '哪个仓库车辆最多？','哪个仓库总载重最高？','采用什么评分方法？','各仓库需求波动多大？'
 ] : questions;
 $('prompts').replaceChildren(...displayedQuestions.map((question,i)=>{

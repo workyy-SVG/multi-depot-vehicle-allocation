@@ -11,6 +11,7 @@
 python -m pip install -r requirements-score.txt
 python verify.py
 python verify_improvements.py
+python verify_route_pool.py
 python publish_results.py --trials 3 --time-budget 1200
 python verify_release.py
 ```

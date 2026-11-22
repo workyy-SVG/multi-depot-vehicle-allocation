@@ -270,9 +270,10 @@ def sample_periods(start, stop, count):
     return np.linspace(start, stop - 1, min(stop - start, count), dtype=int).tolist()
 
 
-def write_allocation(path, allocation):
+def write_allocation(path, allocation, *, preserve_order=False):
     from result_files import atomic_text
-    atomic_text(path, '\n'.join(' '.join(map(str, [len(ids)] + sorted(ids))) for ids in allocation) + '\n')
+    atomic_text(path, '\n'.join(' '.join(map(str, [len(ids)] + (list(ids) if preserve_order else sorted(ids))))
+                               for ids in allocation) + '\n')
 
 
 def read_allocation(path, data):
@@ -304,7 +305,7 @@ def solve_for_score(path, outdir, args):
         validation_trials=args.score_trials, validation_report=validation,
     )
     check_allocation(data, final)
-    write_allocation(outdir / (path.stem + '.out'), final)
+    write_allocation(outdir / (path.stem + '.out'), final, preserve_order=True)
     atomic_json(outdir / (path.stem + '.json'),
                 score_report(path, data, final, validation=validation))
     print(f'{path.name}: baseline {before:.4f}, incumbent {incumbent_score:.4f}, final {after:.4f}',
@@ -434,7 +435,7 @@ def main():
                     fallback = (read_allocation(fallback_file, data) if fallback_file
                                 else baseline(data, data['hist'], 'mean'))
                     fallback_source = str(fallback_file) if fallback_file else 'mean_greedy'
-                    write_allocation(out / (path.stem + '.out'), fallback)
+                    write_allocation(out / (path.stem + '.out'), fallback, preserve_order=True)
                     atomic_json(out / (path.stem + '.json'),
                                 score_report(path, data, fallback, source=fallback_source))
                     stage = out / '_work' / path.stem

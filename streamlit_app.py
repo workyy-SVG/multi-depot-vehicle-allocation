@@ -220,7 +220,9 @@ def render_score_analysis(instance, report):
     st.subheader('评分方案的独立复测')
     st.caption(f"全历史平均需求；未服务罚分为单程距离的 2 倍；每仓 {validation['seconds_per_depot']} 秒，独立复测 {validation['trials']} 次。")
     labels = {'output':'原方案', 'score_output':'评分搜索', 'score_benchmark':'组合搜索',
-              'score_optimization/allocations':'改进方案', 'released':'上次正式提交'}
+              'score_optimization/allocations':'改进方案', 'released':'上次正式提交',
+              'deep_candidates/order':'车型顺序优化','deep_candidates/count':'车辆数优化',
+               'deep_candidates/pool':'路线池联合搜索','deep_candidates/portfolio':'实测车队重组'}
     st.table([{'方案': labels.get(row['name'], f'候选方案 {i+1}'), '成本中位数': round(row['median'], 3),
                '最低': round(row['minimum'], 3), '最高': round(row['maximum'], 3),
                '正式提交': row['name'] == validation['selected']}
