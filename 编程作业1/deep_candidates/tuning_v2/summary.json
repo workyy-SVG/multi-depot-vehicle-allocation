@@ -1,21 +1,22 @@
 {
   "reference_commit": "ce8c2098f27a598e420fae1ed9bd3cbfb8086e75",
-  "checked_cases": 8,
+  "checked_cases": 9,
   "released_cases": [
     "07_random",
     "08_random",
     "09_random",
     "10_random",
-    "12_random"
+    "12_random",
+    "13_random"
   ],
   "validation_trials": 3,
   "seconds_per_depot": 3.0,
   "seed": 0,
-  "prior_total": 79387.542,
-  "new_total": 76193.925,
-  "reduction": 3193.6169999999984,
-  "reduction_pct": 4.022818844800609,
-  "official_manifest_total": 141012.915,
+  "prior_total": 143061.48,
+  "new_total": 139581.215,
+  "reduction": 3480.265000000014,
+  "reduction_pct": 2.4327058548534612,
+  "official_manifest_total": 139644.177,
   "rows": [
     {
       "instance": "05_increasing_demand",
@@ -88,6 +89,15 @@
       "selected": "order12_rank_1",
       "prior_attachment_median": 28302.993,
       "new_attachment_median": 26246.326999999997
+    },
+    {
+      "instance": "13_random",
+      "prior_median": 63673.93800000001,
+      "new_median": 63387.29000000001,
+      "reduction": 286.64800000000105,
+      "selected": "rank13_rank_2",
+      "prior_attachment_median": 63673.93800000001,
+      "new_attachment_median": 63387.29000000001
     }
   ],
   "attachment_trials": {
@@ -152,6 +162,18 @@
         26246.326999999997,
         26246.326999999997,
         26246.326999999997
+      ]
+    },
+    "13_random": {
+      "released": [
+        63673.93800000001,
+        63928.435000000005,
+        63673.93800000001
+      ],
+      "rank13_rank_2": [
+        63328.23700000001,
+        63387.29000000001,
+        63387.29000000001
       ]
     }
   }

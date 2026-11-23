@@ -7,3 +7,4 @@ instance,prior_median,new_median,reduction,selected,prior_attachment_median,new_
 10_random,5995.855,5989.643,6.212,rank10_rank_1,5995.855,5989.643
 11_random,2687.245,2687.245,0.000,released,,
 12_random,28218.895,26475.801,1743.094,order12_rank_1,28302.993,26246.327
+13_random,63673.938,63387.290,286.648,rank13_rank_2,63673.938,63387.290

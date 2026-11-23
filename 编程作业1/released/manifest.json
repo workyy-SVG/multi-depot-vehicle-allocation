@@ -6,20 +6,20 @@
   "seconds_per_depot": 3.0,
   "requested_trials": 3,
   "time_budget": null,
-  "elapsed_seconds": 995.3470041000983,
+  "elapsed_seconds": 1263.0119436001405,
   "complete": true,
   "updated_cases": [
     "07_random",
     "08_random",
     "09_random",
     "10_random",
-    "12_random"
+    "12_random",
+    "13_random"
   ],
   "retained_cases": [
     "05_increasing_demand",
     "06_random",
-    "11_random",
-    "13_random"
+    "11_random"
   ],
   "cases": [
     {
@@ -106,9 +106,9 @@
       "input": "13_random.in",
       "input_sha256": "0eb2c9dea1330105c990dc36437e94b304f6639c13384313afae2a3ae5ae40d4",
       "output": "13_random.out",
-      "output_sha256": "4d04e5a71e838c5a4726c8c67c197e1c83d49b590ef2946beb3ef6074705366f",
-      "selected_source": "deep_candidates/portfolio",
-      "score": 64756.028000000006,
+      "output_sha256": "58647ccef1e61e277070081c03d9f590a46ac75069f7edb8702836b8a5810610",
+      "selected_source": "deep_candidates/tuning_v2",
+      "score": 63387.29000000001,
       "status": "validated",
       "trials": 3
     }
