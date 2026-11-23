@@ -1,10 +1,13 @@
 """Known-answer checks for global route packing and vehicle matching."""
+from pathlib import Path
 import unittest
+from unittest.mock import MagicMock, patch
 
 from route_pool_search import assign_trucks, pack_routes
 from solve import check_allocation
 from fleet_order_search import candidate_orders
-from measured_fleet_portfolio import combine_fleets
+from measured_fleet_portfolio import combine_fleets, measure_ordered_columns
+from score_optimization import optimize
 
 
 class RoutePoolChecks(unittest.TestCase):
@@ -49,6 +52,27 @@ class RoutePoolChecks(unittest.TestCase):
         groups=plans[0]['allocation']
         self.assertEqual(tuple([5,5,10][v] for v in groups[0]),(5,10))
         check_allocation(dict(D=2,V=3),groups)
+
+    def test_order_screen_preserves_anchors_and_remeasures_only_shortlisted_alternatives(self):
+        path = Path(__file__).resolve().parent / 'example_tutorial.in'
+        # Three capacity types give more alternative permutations than the shortlist.
+        instance = (1, (3, 5, 10), [(0, 0)], [None])
+        calls = []
+
+        def measure(job):
+            calls.append(job)
+            _, fleet, budget = job
+            return fleet[0] if budget < 3 else 100 + fleet[0]
+
+        pool = MagicMock()
+        pool.__enter__.return_value.map.side_effect = map
+        with patch.object(optimize, 'read_instance', return_value=instance), \
+             patch.object(optimize, 'measure', side_effect=measure), \
+             patch('measured_fleet_portfolio.ProcessPoolExecutor', return_value=pool):
+            columns = measure_ordered_columns(path, [((2, 1, 0),)], samples=6,
+                                              shortlist=1, workers=1, seconds=3.0)
+        self.assertEqual(len([job for job in calls if job[2] < 3]), 5)
+        self.assertEqual(columns, [{(3, 5, 10): 103, (10, 5, 3): 110}])
 
 
 if __name__ == '__main__':

@@ -7,28 +7,28 @@
   "allocation": [
     [
       0,
-      1
+      1,
+      2
     ],
     [
-      2,
       3,
       4,
-      5
+      5,
+      6
     ],
     [
-      6,
       7,
       8,
-      9
+      9,
+      10
     ],
     [
-      10,
       11,
-      12
+      12,
+      13,
+      14
     ],
     [
-      13,
-      14,
       15,
       16,
       17,
@@ -37,11 +37,11 @@
     ]
   ],
   "capacities": [
-    200,
-    400,
-    400,
     300,
-    700
+    400,
+    400,
+    400,
+    500
   ],
   "declared_customer_counts": [
     100,
@@ -52,35 +52,35 @@
   ],
   "ignored_trailing_records": 0,
   "periods": 100,
-  "selected_source": "score_optimization/allocations",
-  "score": 4983.44,
+  "selected_source": "deep_candidates/tuning_v2",
+  "score": 4983.248,
   "validation": {
-    "selected": "score_optimization/allocations",
+    "selected": "deep_candidates/tuning_v2",
     "allocation": [
       [
         0,
-        1
+        1,
+        2
       ],
       [
-        2,
         3,
         4,
-        5
+        5,
+        6
       ],
       [
-        6,
         7,
         8,
-        9
+        9,
+        10
       ],
       [
-        10,
         11,
-        12
+        12,
+        13,
+        14
       ],
       [
-        13,
-        14,
         15,
         16,
         17,
@@ -90,48 +90,37 @@
     ],
     "candidates": [
       {
-        "name": "score_optimization/allocations",
+        "name": "released",
         "scores": [
-          4983.44,
-          4983.44,
-          4991.721
+          4983.268,
+          4983.268,
+          4983.268
         ],
-        "median": 4983.44,
-        "minimum": 4983.44,
-        "maximum": 4991.721
+        "median": 4983.268,
+        "minimum": 4983.268,
+        "maximum": 4983.268
       },
       {
-        "name": "score_output",
+        "name": "deep_candidates/tuning_v2",
         "scores": [
-          4985.279,
-          4985.279,
-          4985.93
+          4983.248,
+          4983.248,
+          4983.248
         ],
-        "median": 4985.279,
-        "minimum": 4985.279,
-        "maximum": 4985.93
+        "median": 4983.248,
+        "minimum": 4983.248,
+        "maximum": 4983.248
       },
       {
-        "name": "score_benchmark",
+        "name": "round07_rank_1",
         "scores": [
-          4985.279,
-          4985.279,
-          4985.93
+          4983.248,
+          4983.248,
+          4983.248
         ],
-        "median": 4985.279,
-        "minimum": 4985.279,
-        "maximum": 4985.93
-      },
-      {
-        "name": "output",
-        "scores": [
-          4985.5740000000005,
-          4985.5740000000005,
-          4993.855
-        ],
-        "median": 4985.5740000000005,
-        "minimum": 4985.5740000000005,
-        "maximum": 4993.855
+        "median": 4983.248,
+        "minimum": 4983.248,
+        "maximum": 4983.248
       }
     ],
     "trials": 3,
@@ -141,12 +130,12 @@
     "distance_scale": 1000,
     "penalty_multiplier": 2,
     "profile": {
-      "preprocess_seconds": 0.02076009998563677,
-      "model_seconds": 0.0051198998698964715,
-      "solve_seconds": 99.23428369988687,
-      "solver_calls": 33
+      "preprocess_seconds": 0.011561200022697449,
+      "model_seconds": 0.002844200353138149,
+      "solve_seconds": 81.11729169997852,
+      "solver_calls": 27
     },
-    "elapsed_seconds": 99.26489089999814,
+    "elapsed_seconds": 81.13385350001045,
     "status": "validated"
   },
   "environment": {

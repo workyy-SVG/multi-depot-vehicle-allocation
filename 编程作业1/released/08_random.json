@@ -9,19 +9,19 @@
       0,
       1,
       2,
-      3
+      3,
+      4,
+      5
     ],
     [
-      4,
-      5,
       6,
       7,
       8
     ]
   ],
   "capacities": [
-    40000,
-    50000
+    60000,
+    30000
   ],
   "declared_customer_counts": [
     1000,
@@ -29,20 +29,20 @@
   ],
   "ignored_trailing_records": 0,
   "periods": 40,
-  "selected_source": "deep_candidates/count",
-  "score": 10338.418,
+  "selected_source": "deep_candidates/tuning_v2",
+  "score": 9494.851,
   "validation": {
-    "selected": "deep_candidates/count",
+    "selected": "deep_candidates/tuning_v2",
     "allocation": [
       [
         0,
         1,
         2,
-        3
+        3,
+        4,
+        5
       ],
       [
-        4,
-        5,
         6,
         7,
         8
@@ -52,24 +52,24 @@
       {
         "name": "released",
         "scores": [
-          10993.142,
-          10978.682,
-          10978.682
+          10331.157,
+          10331.157,
+          10331.157
         ],
-        "median": 10978.682,
-        "minimum": 10978.682,
-        "maximum": 10993.142
+        "median": 10331.157,
+        "minimum": 10331.157,
+        "maximum": 10331.157
       },
       {
-        "name": "deep_candidates/count",
+        "name": "deep_candidates/tuning_v2",
         "scores": [
-          10338.418,
-          10338.418,
-          10338.418
+          9494.851,
+          9494.851,
+          9494.851
         ],
-        "median": 10338.418,
-        "minimum": 10338.418,
-        "maximum": 10338.418
+        "median": 9494.851,
+        "minimum": 9494.851,
+        "maximum": 9494.851
       }
     ],
     "trials": 3,
@@ -79,12 +79,12 @@
     "distance_scale": 1000,
     "penalty_multiplier": 2,
     "profile": {
-      "preprocess_seconds": 0.3989313000056427,
-      "model_seconds": 0.06420740004978143,
-      "solve_seconds": 41.01734529991518,
+      "preprocess_seconds": 0.2336568001192063,
+      "model_seconds": 0.040864999871701,
+      "solve_seconds": 38.71671340032481,
       "solver_calls": 12
     },
-    "elapsed_seconds": 41.49576949997572,
+    "elapsed_seconds": 38.998118399991654,
     "status": "validated"
   },
   "environment": {

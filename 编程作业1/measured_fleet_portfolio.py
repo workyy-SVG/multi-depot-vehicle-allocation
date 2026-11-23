@@ -1,5 +1,6 @@
 """Recombine measured ordered fleets by capacity inventory, independent of IDs."""
 from collections import Counter, defaultdict
+from concurrent.futures import ProcessPoolExecutor
 from math import isfinite
 from ortools.linear_solver import pywraplp
 
@@ -42,6 +43,38 @@ def combine_fleets(capacities, columns, *, solutions=3, seconds=5):
     return plans
 
 
+def measure_ordered_columns(path, allocations, *, samples, shortlist, workers, seconds):
+    """Screen alternative orders per depot, then measure them and all original columns."""
+    from fleet_order_search import candidate_orders
+    from score_optimization import optimize as engine
+
+    instance = engine.read_instance(path)
+    periods, capacities, locations, history = instance
+    original = [set() for _ in locations]
+    alternatives = [set() for _ in locations]
+    for groups in allocations:
+        for depot, ids in enumerate(groups):
+            original[depot].add(tuple(capacities[v] for v in ids))
+            alternatives[depot].update(tuple(capacities[v] for v in order)
+                                       for order in candidate_orders(ids, capacities, samples,
+                                                                     seed=17+31*depot))
+    screening_budget = min(0.12, seconds / 2)
+    with ProcessPoolExecutor(workers, initializer=engine.initialize,
+                             initargs=(periods, locations, history)) as executor:
+        evaluator = engine.Evaluator(instance, executor)
+        pending = [fleets - saved for fleets, saved in zip(alternatives, original)]
+        evaluator.costs(((depot, fleet) for depot, fleets in enumerate(pending)
+                         for fleet in fleets), screening_budget)
+        for depot, fleets in enumerate(pending):
+            ranked = sorted(fleets, key=lambda fleet: (evaluator.cached_cost(depot, fleet, screening_budget),
+                                                       fleet))
+            original[depot].update(ranked[:shortlist])
+        evaluator.costs(((depot, fleet) for depot, fleets in enumerate(original)
+                         for fleet in fleets), seconds)
+        return [{fleet: evaluator.cached_cost(depot, fleet, seconds) for fleet in sorted(fleets)}
+                for depot, fleets in enumerate(original)]
+
+
 def main():
     import argparse
     from pathlib import Path
@@ -56,21 +89,35 @@ def main():
     parser.add_argument('--outdir',type=Path,required=True)
     parser.add_argument('--seconds',type=float,default=3.0)
     parser.add_argument('--solutions',type=int,default=3)
+    parser.add_argument('--orders', type=int, default=0,
+                        help='Sample this many legal orderings per original fleet before recombining')
+    parser.add_argument('--shortlist', type=int, default=6,
+                        help='Maximum additional ordered fleets kept per depot after screening')
+    parser.add_argument('--workers', type=int, default=3,
+                        help='Parallel evaluation workers for the optional order-screening stage')
     args=parser.parse_args()
-    if args.seconds<=0 or args.solutions<1:parser.error('Positive runtime and solution count are required.')
+    if args.seconds<=0 or args.solutions<1 or args.orders<0 or args.shortlist<1 or args.workers<1:
+        parser.error('Use nonnegative order counts and positive limits.')
     data=read_instance(args.input)
-    evaluator=ScoreEvaluator(data)
-    columns=[{} for _ in range(data['D'])]
-    found=False
+    allocations = []
     for folder in args.reference:
         file=folder/(args.input.stem+'.out')
         if not file.is_file():continue
-        groups=read_allocation(file,data);found=True
-        for depot,ids in enumerate(groups):
-            fleet=tuple(data['caps'][v] for v in ids)
-            columns[depot][fleet]=evaluator.cost(depot,fleet,args.seconds)
-        print(f'Measured candidate: {folder}',flush=True)
-    if not found:parser.error('No matching reference allocations found.')
+        allocations.append(read_allocation(file, data))
+        print(f'Loaded candidate: {folder}', flush=True)
+    if not allocations:parser.error('No matching reference allocations found.')
+    if args.orders:
+        columns = measure_ordered_columns(args.input, allocations, samples=args.orders,
+                                          shortlist=args.shortlist, workers=args.workers,
+                                          seconds=args.seconds)
+    else:
+        evaluator = ScoreEvaluator(data)
+        columns = [{} for _ in range(data['D'])]
+        for groups in allocations:
+            for depot, ids in enumerate(groups):
+                fleet = tuple(data['caps'][v] for v in ids)
+                columns[depot][fleet] = evaluator.cost(depot, fleet, args.seconds)
+    print(f'Measured fleet counts by depot: {[len(fleets) for fleets in columns]}', flush=True)
     plans=combine_fleets(data['caps'],columns,solutions=args.solutions)
     if not plans:raise RuntimeError('No feasible combination of measured fleets.')
     for rank,plan in enumerate(plans,1):
@@ -78,6 +125,7 @@ def main():
     write_allocation(args.outdir/(args.input.stem+'.out'),plans[0]['allocation'])
     atomic_json(args.outdir/(args.input.stem+'.json'),dict(
         method='measured_ordered_fleet_inventory_mip',candidates=plans,
+        order_samples=args.orders, ordered_fleets_per_depot=[len(fleets) for fleets in columns],
         note='Predicted costs are sums of search measurements; validate independently before publication.'))
 
 

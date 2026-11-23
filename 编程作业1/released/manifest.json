@@ -5,21 +5,21 @@
   "distance_scale": 1000,
   "seconds_per_depot": 3.0,
   "requested_trials": 3,
-  "time_budget": 900,
-  "elapsed_seconds": 200.9661699999997,
+  "time_budget": null,
+  "elapsed_seconds": 995.3470041000983,
   "complete": true,
   "updated_cases": [
+    "07_random",
     "08_random",
     "09_random",
-    "12_random",
-    "13_random"
+    "10_random",
+    "12_random"
   ],
   "retained_cases": [
     "05_increasing_demand",
     "06_random",
-    "07_random",
-    "10_random",
-    "11_random"
+    "11_random",
+    "13_random"
   ],
   "cases": [
     {
@@ -46,9 +46,9 @@
       "input": "07_random.in",
       "input_sha256": "ed0fa381e9c49cad9c1853fe0a55e5fc3b85e64cceb61b988fa9c8b67d078570",
       "output": "07_random.out",
-      "output_sha256": "de5b726ef9fff43464b848c44f5ba725b02a6e16bd8fe868b325f44087c1506e",
-      "selected_source": "score_optimization/allocations",
-      "score": 4983.44,
+      "output_sha256": "c0785b8f2af8da8e5bb38b525a5215ddab96845aad3322a9735d1819ea797ae0",
+      "selected_source": "deep_candidates/tuning_v2",
+      "score": 4983.248,
       "status": "validated",
       "trials": 3
     },
@@ -56,9 +56,9 @@
       "input": "08_random.in",
       "input_sha256": "2e58c1365026e85321a2510189f0a21faa6a0ea14277d7b4fe5b8825e2a3bc3e",
       "output": "08_random.out",
-      "output_sha256": "697b2ad0ea148e34c65f5956836209f6d029a0a582fbce63bace9f165848810e",
-      "selected_source": "deep_candidates/count",
-      "score": 10338.418,
+      "output_sha256": "df9c84e619138095cf12ed3b7acfc77342ab16c8bbdb8efd40c7a773c9735b9b",
+      "selected_source": "deep_candidates/tuning_v2",
+      "score": 9494.851,
       "status": "validated",
       "trials": 3
     },
@@ -66,9 +66,9 @@
       "input": "09_random.in",
       "input_sha256": "3d045acd9d3c166419c9fbbd600ad5f4d51bb956d8768755220d6d13a7248f64",
       "output": "09_random.out",
-      "output_sha256": "559026b3c52778fba8fc692802e3fb0c60ed97492c5545a7793d0dd788f9d5fe",
-      "selected_source": "deep_candidates/order",
-      "score": 24746.915,
+      "output_sha256": "7d91dff36bfff22104f03d9eba9296eefdfb5c499a50749d54c28a6d3d6b7f44",
+      "selected_source": "deep_candidates/tuning_v2",
+      "score": 22541.134,
       "status": "validated",
       "trials": 3
     },
@@ -76,9 +76,9 @@
       "input": "10_random.in",
       "input_sha256": "4032a22a92a175ab680673c15f08c88cafea2746b281a05f8ed1a2c4c5319db4",
       "output": "10_random.out",
-      "output_sha256": "d66361fdc9965961aa90f0847dcd29e038fcd67e9c411b56b4c9220bdb61dec2",
-      "selected_source": "score_optimization/allocations",
-      "score": 6041.327000000001,
+      "output_sha256": "6181c38627a8f9f8c432c7ab8187ff917cb6d1caa503e442e17a6cd70f2d634e",
+      "selected_source": "deep_candidates/tuning_v2",
+      "score": 5989.643,
       "status": "validated",
       "trials": 3
     },
@@ -96,9 +96,9 @@
       "input": "12_random.in",
       "input_sha256": "215ff6ddb89d3d84397849abf6839fbcadceba2792b00a5b58a29ee950f270ed",
       "output": "12_random.out",
-      "output_sha256": "5a463d12c875c9329dac30649dc9f608b83c42bf944864f737e1bf9fcab00be1",
-      "selected_source": "deep_candidates/order",
-      "score": 28915.314000000002,
+      "output_sha256": "41bda4479026f79da1444a2a1df8853dcdb25817266511a18fb115fdfea58d01",
+      "selected_source": "deep_candidates/tuning_v2",
+      "score": 26475.801,
       "status": "validated",
       "trials": 3
     },

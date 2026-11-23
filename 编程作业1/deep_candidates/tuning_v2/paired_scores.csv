@@ -1,0 +1,9 @@
+instance,prior_median,new_median,reduction,selected,prior_attachment_median,new_attachment_median
+05_increasing_demand,2188.685,2188.685,0.000,released,,
+06_random,1833.318,1833.318,0.000,released,,
+07_random,4983.268,4983.248,0.020,score_benchmark,4983.268,4983.248
+08_random,10331.157,9494.851,836.306,score_optimization/allocations,10331.157,9494.851
+09_random,23149.119,22541.134,607.985,order09_rank_2,23137.296,22541.134
+10_random,5995.855,5989.643,6.212,rank10_rank_1,5995.855,5989.643
+11_random,2687.245,2687.245,0.000,released,,
+12_random,28218.895,26475.801,1743.094,order12_rank_1,28302.993,26246.327
