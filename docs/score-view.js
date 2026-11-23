@@ -12,7 +12,8 @@ function scoreSourceLabel(name, index=0) {
     'released':'上次正式提交','incumbent':'上次方案','reference':'原方案',
     'mean_greedy':'需求均值分配','deep_candidates/order':'车型顺序优化',
     'deep_candidates/count':'车辆数优化','deep_candidates/pool':'路线池联合搜索',
-    'deep_candidates/portfolio':'实测车队重组','deep_candidates/tuning_v2':'本轮复测选中'};
+    'deep_candidates/portfolio':'实测车队重组','deep_candidates/tuning_v2':'上一轮复测选中',
+    'deep_candidates/anneal_v3':'退火与组合实验选中'};
   return names[name] || '候选方案 '+(index+1);
 }
 function publishedEntries() {

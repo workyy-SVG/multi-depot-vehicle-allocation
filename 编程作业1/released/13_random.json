@@ -11,13 +11,13 @@
       23
     ],
     [
-      26,
       2,
-      10,
-      22,
       8,
+      10,
+      7,
+      22,
       25,
-      7
+      26
     ],
     [
       18,
@@ -36,14 +36,14 @@
     ],
     [
       0,
-      6,
-      20,
       9,
-      12,
-      14,
       15,
+      24,
+      6,
       17,
-      24
+      12,
+      20,
+      14
     ]
   ],
   "capacities": [
@@ -62,10 +62,10 @@
   ],
   "ignored_trailing_records": 155,
   "periods": 100,
-  "selected_source": "deep_candidates/tuning_v2",
-  "score": 63387.29000000001,
+  "selected_source": "deep_candidates/anneal_v3",
+  "score": 63601.74900000001,
   "validation": {
-    "selected": "deep_candidates/tuning_v2",
+    "selected": "deep_candidates/anneal_v3",
     "allocation": [
       [
         3,
@@ -73,13 +73,13 @@
         23
       ],
       [
-        26,
         2,
-        10,
-        22,
         8,
+        10,
+        7,
+        22,
         25,
-        7
+        26
       ],
       [
         18,
@@ -98,93 +98,71 @@
       ],
       [
         0,
-        6,
-        20,
         9,
-        12,
-        14,
         15,
+        24,
+        6,
         17,
-        24
+        12,
+        20,
+        14
       ]
     ],
     "candidates": [
       {
         "name": "released",
         "scores": [
-          63939.237,
-          63673.93800000001,
-          63622.565
+          63847.388,
+          63866.520000000004,
+          63859.223999999995
         ],
-        "median": 63673.93800000001,
-        "minimum": 63622.565,
-        "maximum": 63939.237
+        "median": 63859.223999999995,
+        "minimum": 63847.388,
+        "maximum": 63866.520000000004
       },
       {
-        "name": "score_optimization/allocations",
+        "name": "anneal13_rank_1",
         "scores": [
-          63954.906,
-          63448.651,
-          63403.53200000001
+          63977.99700000001,
+          63997.129000000015,
+          63989.833000000006
         ],
-        "median": 63448.651,
-        "minimum": 63403.53200000001,
-        "maximum": 63954.906
+        "median": 63989.833000000006,
+        "minimum": 63977.99700000001,
+        "maximum": 63997.129000000015
       },
       {
-        "name": "score_benchmark",
+        "name": "ordered13_rank_2",
         "scores": [
-          65154.011,
-          64890.55900000001,
-          64890.55900000001
+          63985.091,
+          64004.223,
+          63985.091
         ],
-        "median": 64890.55900000001,
-        "minimum": 64890.55900000001,
-        "maximum": 65154.011
+        "median": 63985.091,
+        "minimum": 63985.091,
+        "maximum": 64004.223
       },
       {
-        "name": "score_output",
+        "name": "deep_candidates/anneal_v3",
         "scores": [
-          64940.25600000001,
-          65072.903000000006,
-          65059.467000000004
+          63601.74900000001,
+          63357.736000000004,
+          63613.58500000001
         ],
-        "median": 65059.467000000004,
-        "minimum": 64940.25600000001,
-        "maximum": 65072.903000000006
+        "median": 63601.74900000001,
+        "minimum": 63357.736000000004,
+        "maximum": 63613.58500000001
       },
       {
-        "name": "rank13_rank_1",
+        "name": "hybrid13_rank_2",
         "scores": [
-          63719.531,
-          63465.034,
-          63465.034
+          63626.581000000006,
+          63382.568,
+          63638.417
         ],
-        "median": 63465.034,
-        "minimum": 63465.034,
-        "maximum": 63719.531
-      },
-      {
-        "name": "deep_candidates/tuning_v2",
-        "scores": [
-          63652.589,
-          63387.29000000001,
-          63387.29000000001
-        ],
-        "median": 63387.29000000001,
-        "minimum": 63387.29000000001,
-        "maximum": 63652.589
-      },
-      {
-        "name": "round13_rank_2",
-        "scores": [
-          64018.082,
-          63755.84,
-          63712.212
-        ],
-        "median": 63755.84,
-        "minimum": 63712.212,
-        "maximum": 64018.082
+        "median": 63626.581000000006,
+        "minimum": 63382.568,
+        "maximum": 63638.417
       }
     ],
     "trials": 3,
@@ -194,12 +172,12 @@
     "distance_scale": 1000,
     "penalty_multiplier": 2,
     "profile": {
-      "preprocess_seconds": 0.032751700025983155,
-      "model_seconds": 0.015570700052194297,
-      "solve_seconds": 171.47070920013357,
-      "solver_calls": 57
+      "preprocess_seconds": 0.03659289993811399,
+      "model_seconds": 0.010826499899849296,
+      "solve_seconds": 108.34421220025979,
+      "solver_calls": 36
     },
-    "elapsed_seconds": 171.52823850000277,
+    "elapsed_seconds": 108.39761370001361,
     "status": "validated"
   },
   "environment": {

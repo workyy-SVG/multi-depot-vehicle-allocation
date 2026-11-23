@@ -167,10 +167,13 @@ def enumerated_splits(evaluator):
         yield evaluator.canonical((left, right))
 
 
-def changed(groups, left, right, one, other):
+def changed(groups, left, right, one, other, *, preserve_order=False):
     updated = list(groups)
-    updated[left] = tuple(sorted((set(groups[left]) - set(one)) | set(other)))
-    updated[right] = tuple(sorted((set(groups[right]) - set(other)) | set(one)))
+    updated[left] = (*[v for v in groups[left] if v not in one], *other)
+    updated[right] = (*[v for v in groups[right] if v not in other], *one)
+    if not preserve_order:
+        updated[left] = tuple(sorted(updated[left]))
+        updated[right] = tuple(sorted(updated[right]))
     return tuple(updated)
 
 
@@ -190,14 +193,26 @@ def paired_neighbors(groups, left, right, rng, samples):
             yield changed(groups, left, right, rng.sample(a, n), rng.sample(b, m))
 
 
-def perturb(groups, rng, strength):
+def perturb(groups, rng, strength, *, capacities=None):
     assignment = list(groups)
     for _ in range(strength):
+        if capacities is not None and rng.random() < 0.25:
+            depots = [d for d, ids in enumerate(assignment) if len({capacities[v] for v in ids}) > 1]
+            if depots:
+                depot = rng.choice(depots)
+                ordered = list(assignment[depot])
+                left = rng.randrange(len(ordered))
+                right = rng.choice([i for i, v in enumerate(ordered)
+                                    if capacities[v] != capacities[ordered[left]]])
+                ordered[left], ordered[right] = ordered[right], ordered[left]
+                assignment[depot] = tuple(ordered)
+                continue
         left, right = rng.sample(range(len(groups)), 2)
         one = (rng.choice(assignment[left]),) if assignment[left] else ()
         other = (rng.choice(assignment[right]),) if assignment[right] and (
             not one or rng.random() < 0.8) else ()
-        assignment = list(changed(assignment, left, right, one, other))
+        assignment = list(changed(assignment, left, right, one, other,
+                                  preserve_order=capacities is not None))
     return tuple(assignment)
 
 
@@ -309,13 +324,15 @@ def heterogeneous(evaluator, references, args):
         methods["three_depot_cycles"] = [group for _, group in evaluator.rank(
             screened, medium, args.finalists)]
 
+    ordered_capacities = evaluator.caps if args.anneal_ordered else None
     for temperature in args.temperatures:
         walkers = evaluator.rank(leaders, low, args.beam)
         explored = list(walkers)
         for step in range(args.anneal_steps):
-            proposals = [perturb(group, rng, rng.choice((1, 1, 2, 3))) for _, group in walkers]
+            proposals = [perturb(group, rng, rng.choice((1, 1, 2, 3)), capacities=ordered_capacities)
+                         for _, group in walkers]
             scores = dict((group, score) for score, group in evaluator.rank(proposals, low))
-            scale = temperature * .025 ** (step / max(1, args.anneal_steps - 1))
+            scale = temperature * args.anneal_final_ratio ** (step / max(1, args.anneal_steps - 1))
             for idx, ((score, old), proposal) in enumerate(zip(walkers, proposals)):
                 trial = scores.get(proposal)
                 if trial is None:
@@ -323,9 +340,10 @@ def heterogeneous(evaluator, references, args):
                 if trial <= score or rng.random() < exp((score - trial) / max(1, score * scale)):
                     walkers[idx] = (trial, proposal)
                 explored.append((trial, proposal))
+        # Take the unique cheap-scored candidates before applying the medium budget.
+        distinct = evaluator.rank((group for _, group in explored), low, args.finalists * 5)
         shortlisted = [group for _, group in evaluator.rank(
-            (group for _, group in sorted(explored)[:args.finalists * 5]),
-            medium, args.finalists)]
+            (group for _, group in distinct), medium, args.finalists)]
         methods[f"anneal_{temperature:g}"] = shortlisted
     return methods
 
@@ -394,6 +412,10 @@ def main():
     parser.add_argument("--full-enumeration", action="store_true",
                         help="Evaluate every small two-depot capacity split for three seconds")
     parser.add_argument("--anneal-steps", type=int, default=32)
+    parser.add_argument("--anneal-final-ratio", type=float, default=0.025,
+                        help="Final geometric temperature as a fraction of the initial temperature")
+    parser.add_argument("--anneal-ordered", action="store_true",
+                        help="Keep sequences on transfers and also sample within-depot order swaps")
     parser.add_argument("--cycles", type=int, default=0,
                         help="Number of three-way exchanges sampled from each leading allocation")
     parser.add_argument("--temperatures", type=float, nargs="*", default=(0.002, 0.008))
@@ -402,6 +424,10 @@ def main():
         parser.error("Worker and shortlist sizes must be positive")
     if min(args.rounds, args.samples, args.cycles, args.anneal_steps) < 0:
         parser.error("Search rounds and sample counts must be nonnegative")
+    if not 0 < args.anneal_final_ratio <= 1:
+        parser.error("Final temperature ratio must be in (0, 1]")
+    if any(not isfinite(t) or t <= 0 for t in args.temperatures):
+        parser.error("Initial temperatures must be positive and finite")
     if args.screen_time and not 0 < args.screen_time[0] <= args.screen_time[1] <= args.screen_time[2]:
         parser.error("Screening times must be positive and in ascending order")
     paths = sorted(args.input.glob("*.in")) if args.input.is_dir() else [args.input]

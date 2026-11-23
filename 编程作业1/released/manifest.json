@@ -6,20 +6,20 @@
   "seconds_per_depot": 3.0,
   "requested_trials": 3,
   "time_budget": null,
-  "elapsed_seconds": 1263.0119436001405,
+  "elapsed_seconds": 535.8992162001086,
   "complete": true,
   "updated_cases": [
-    "07_random",
-    "08_random",
-    "09_random",
     "10_random",
-    "12_random",
     "13_random"
   ],
   "retained_cases": [
     "05_increasing_demand",
     "06_random",
-    "11_random"
+    "07_random",
+    "08_random",
+    "09_random",
+    "11_random",
+    "12_random"
   ],
   "cases": [
     {
@@ -76,9 +76,9 @@
       "input": "10_random.in",
       "input_sha256": "4032a22a92a175ab680673c15f08c88cafea2746b281a05f8ed1a2c4c5319db4",
       "output": "10_random.out",
-      "output_sha256": "6181c38627a8f9f8c432c7ab8187ff917cb6d1caa503e442e17a6cd70f2d634e",
-      "selected_source": "deep_candidates/tuning_v2",
-      "score": 5989.643,
+      "output_sha256": "5247e8459c71afcce8ed11a5e446e1f07a99c7f37c82ac5a4f4a5013f30b8036",
+      "selected_source": "deep_candidates/anneal_v3",
+      "score": 5985.197999999999,
       "status": "validated",
       "trials": 3
     },
@@ -106,9 +106,9 @@
       "input": "13_random.in",
       "input_sha256": "0eb2c9dea1330105c990dc36437e94b304f6639c13384313afae2a3ae5ae40d4",
       "output": "13_random.out",
-      "output_sha256": "58647ccef1e61e277070081c03d9f590a46ac75069f7edb8702836b8a5810610",
-      "selected_source": "deep_candidates/tuning_v2",
-      "score": 63387.29000000001,
+      "output_sha256": "e990b505b13bb9b1b85b58cdb6aab79aa3cc0e9af4102354402e36618371b99d",
+      "selected_source": "deep_candidates/anneal_v3",
+      "score": 63601.74900000001,
       "status": "validated",
       "trials": 3
     }

@@ -1,5 +1,6 @@
 """Known-answer checks for global route packing and vehicle matching."""
 from pathlib import Path
+from random import Random
 import unittest
 from unittest.mock import MagicMock, patch
 
@@ -73,6 +74,19 @@ class RoutePoolChecks(unittest.TestCase):
                                               shortlist=1, workers=1, seconds=3.0)
         self.assertEqual(len([job for job in calls if job[2] < 3]), 5)
         self.assertEqual(columns, [{(3, 5, 10): 103, (10, 5, 3): 110}])
+
+    def test_ordered_annealing_move_preserves_the_order_of_other_vehicles(self):
+        initial = ((2, 0, 1), (4, 3))
+        changed = optimize.changed(initial, 0, 1, (0,), (4,), preserve_order=True)
+        self.assertEqual(changed, ((2, 1, 4), (3, 0)))
+        self.assertEqual(optimize.changed(initial, 0, 1, (0,), (4,)), ((1, 2, 4), (0, 3)))
+
+    def test_annealing_can_only_swap_order_inside_one_depot(self):
+        initial = ((2, 0, 1), (4, 3))
+        # Random(1) first enters the within-depot move, then picks the depot and two positions.
+        reordered = optimize.perturb(initial, Random(1), 1, capacities=(2, 3, 5, 7, 11))
+        self.assertNotEqual(reordered, initial)
+        self.assertEqual([set(ids) for ids in reordered], [set(ids) for ids in initial])
 
 
 if __name__ == '__main__':

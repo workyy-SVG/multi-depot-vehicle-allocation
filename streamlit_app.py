@@ -223,7 +223,7 @@ def render_score_analysis(instance, report):
               'score_optimization/allocations':'改进方案', 'released':'上次正式提交',
               'deep_candidates/order':'车型顺序优化','deep_candidates/count':'车辆数优化',
               'deep_candidates/pool':'路线池联合搜索','deep_candidates/portfolio':'实测车队重组',
-              'deep_candidates/tuning_v2':'本轮复测选中'}
+              'deep_candidates/tuning_v2':'上一轮复测选中','deep_candidates/anneal_v3':'退火与组合实验选中'}
     st.table([{'方案': labels.get(row['name'], f'候选方案 {i+1}'), '成本中位数': round(row['median'], 3),
                '最低': round(row['minimum'], 3), '最高': round(row['maximum'], 3),
                '正式提交': row['name'] == validation['selected']}

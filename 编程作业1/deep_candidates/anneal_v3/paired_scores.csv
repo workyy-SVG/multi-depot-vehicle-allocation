@@ -1,0 +1,5 @@
+instance,prior_median,new_median,reduction,selected,prior_attachment_median,new_attachment_median
+09_random,22466.848,22466.848,0.000,released,,
+10_random,5988.262,5985.198,3.064,hybrid10_rank_2,5989.643,5985.603
+12_random,26241.713,26241.713,0.000,released,30038.248,30038.248
+13_random,63859.224,63601.749,257.475,hybrid13_rank_1,63908.006,63601.749

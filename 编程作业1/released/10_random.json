@@ -10,24 +10,24 @@
       11
     ],
     [
-      7,
       12,
-      14
+      14,
+      7
     ],
     [
-      3,
-      8,
       10,
-      15
+      15,
+      3,
+      8
     ],
     [
+      18,
       0,
-      1,
-      2,
       4,
       17,
-      18,
-      19
+      1,
+      19,
+      2
     ],
     [
       5,
@@ -54,34 +54,34 @@
   ],
   "ignored_trailing_records": 0,
   "periods": 100,
-  "selected_source": "deep_candidates/tuning_v2",
-  "score": 5989.643,
+  "selected_source": "deep_candidates/anneal_v3",
+  "score": 5985.197999999999,
   "validation": {
-    "selected": "deep_candidates/tuning_v2",
+    "selected": "deep_candidates/anneal_v3",
     "allocation": [
       [
         9,
         11
       ],
       [
-        7,
         12,
-        14
+        14,
+        7
       ],
       [
-        3,
-        8,
         10,
-        15
+        15,
+        3,
+        8
       ],
       [
+        18,
         0,
-        1,
-        2,
         4,
         17,
-        18,
-        19
+        1,
+        19,
+        2
       ],
       [
         5,
@@ -96,68 +96,57 @@
       {
         "name": "released",
         "scores": [
-          5995.855,
-          5999.287,
-          5995.855
+          5988.262,
+          5988.262,
+          5988.262
         ],
-        "median": 5995.855,
-        "minimum": 5995.855,
-        "maximum": 5999.287
+        "median": 5988.262,
+        "minimum": 5988.262,
+        "maximum": 5988.262
       },
       {
-        "name": "score_benchmark",
+        "name": "anneal10_rank_2",
         "scores": [
-          6065.924,
-          6065.924,
-          6065.924
+          5999.179999999999,
+          5999.179999999999,
+          5999.179999999999
         ],
-        "median": 6065.924,
-        "minimum": 6065.924,
-        "maximum": 6065.924
+        "median": 5999.179999999999,
+        "minimum": 5999.179999999999,
+        "maximum": 5999.179999999999
       },
       {
-        "name": "score_output",
+        "name": "ordered10_rank_2",
         "scores": [
-          6084.046,
-          6083.2660000000005,
-          6083.2660000000005
+          5993.791,
+          5993.794,
+          5993.794
         ],
-        "median": 6083.2660000000005,
-        "minimum": 6083.2660000000005,
-        "maximum": 6084.046
+        "median": 5993.794,
+        "minimum": 5993.791,
+        "maximum": 5993.794
       },
       {
-        "name": "deep_candidates/tuning_v2",
+        "name": "hybrid10_rank_1",
         "scores": [
-          5989.643,
-          5990.148999999999,
-          5989.643
+          5986.094,
+          5986.094,
+          5986.094
         ],
-        "median": 5989.643,
-        "minimum": 5989.643,
-        "maximum": 5990.148999999999
+        "median": 5986.094,
+        "minimum": 5986.094,
+        "maximum": 5986.094
       },
       {
-        "name": "rank10_rank_2",
+        "name": "deep_candidates/anneal_v3",
         "scores": [
-          5993.722,
-          5994.227999999999,
-          5993.558
+          5985.197999999999,
+          5985.197999999999,
+          5985.197999999999
         ],
-        "median": 5993.722,
-        "minimum": 5993.558,
-        "maximum": 5994.227999999999
-      },
-      {
-        "name": "round10_rank_2",
-        "scores": [
-          6000.602999999999,
-          6001.109,
-          6000.602999999999
-        ],
-        "median": 6000.602999999999,
-        "minimum": 6000.602999999999,
-        "maximum": 6001.109
+        "median": 5985.197999999999,
+        "minimum": 5985.197999999999,
+        "maximum": 5985.197999999999
       }
     ],
     "trials": 3,
@@ -167,12 +156,12 @@
     "distance_scale": 1000,
     "penalty_multiplier": 2,
     "profile": {
-      "preprocess_seconds": 0.02138250006828457,
-      "model_seconds": 0.008996399585157633,
-      "solve_seconds": 180.345856999862,
-      "solver_calls": 60
+      "preprocess_seconds": 0.01923289999831468,
+      "model_seconds": 0.00463999982457608,
+      "solve_seconds": 99.16979910002556,
+      "solver_calls": 33
     },
-    "elapsed_seconds": 180.3851725999266,
+    "elapsed_seconds": 99.1976840000134,
     "status": "validated"
   },
   "environment": {

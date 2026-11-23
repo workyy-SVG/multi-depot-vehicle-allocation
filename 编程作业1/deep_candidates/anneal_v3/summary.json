@@ -1,0 +1,151 @@
+{
+  "reference_commit": "e0af6fb33b24b56253d8fa679fd520f55b6d31fa",
+  "checked_cases": 4,
+  "released_cases": [
+    "10_random",
+    "13_random"
+  ],
+  "validation_trials": 3,
+  "seconds_per_depot": 3.0,
+  "seed": 0,
+  "prior_total": 118556.04699999999,
+  "new_total": 118295.508,
+  "reduction": 260.53899999998976,
+  "reduction_pct": 0.2197601949396894,
+  "official_manifest_total": 139854.19100000002,
+  "rows": [
+    {
+      "instance": "09_random",
+      "prior_median": 22466.847999999998,
+      "new_median": 22466.847999999998,
+      "reduction": 0.0,
+      "selected": "released",
+      "prior_attachment_median": null,
+      "new_attachment_median": null
+    },
+    {
+      "instance": "10_random",
+      "prior_median": 5988.262,
+      "new_median": 5985.197999999999,
+      "reduction": 3.0640000000003056,
+      "selected": "hybrid10_rank_2",
+      "prior_attachment_median": 5989.643,
+      "new_attachment_median": 5985.603
+    },
+    {
+      "instance": "12_random",
+      "prior_median": 26241.713,
+      "new_median": 26241.713,
+      "reduction": 0.0,
+      "selected": "released",
+      "prior_attachment_median": 30038.248,
+      "new_attachment_median": 30038.248
+    },
+    {
+      "instance": "13_random",
+      "prior_median": 63859.223999999995,
+      "new_median": 63601.74900000001,
+      "reduction": 257.474999999984,
+      "selected": "hybrid13_rank_1",
+      "prior_attachment_median": 63908.005999999994,
+      "new_attachment_median": 63601.74900000001
+    }
+  ],
+  "attachment_trials": {
+    "09_random": {},
+    "10_random": {
+      "released": [
+        5989.643,
+        5988.262,
+        5989.643
+      ],
+      "hybrid10_rank_2": [
+        5985.603,
+        5985.603,
+        5985.603
+      ]
+    },
+    "12_random": {
+      "released": [
+        26241.713,
+        30038.248,
+        30038.248
+      ],
+      "order12_rank_1": [
+        26096.547,
+        26096.547,
+        31496.449
+      ]
+    },
+    "13_random": {
+      "released": [
+        63918.80799999999,
+        63847.388,
+        63908.005999999994
+      ],
+      "hybrid13_rank_1": [
+        63601.74900000001,
+        63601.74900000001,
+        63369.572
+      ]
+    }
+  },
+  "attachment_followup": {
+    "10_random": {
+      "challenger": "hybrid10_rank_2",
+      "instance": "10_random",
+      "unchanged": false,
+      "archive_trials": [
+        5988.262,
+        5988.262,
+        5988.262
+      ],
+      "current_trials": [
+        5985.603,
+        5985.603,
+        5985.197999999999
+      ],
+      "archive_median": 5988.262,
+      "current_median": 5985.603,
+      "reduction": 2.6589999999996508,
+      "current_trial_wins": 3
+    },
+    "12_random": {
+      "instance": "12_random",
+      "unchanged": false,
+      "archive_trials": [
+        26246.326999999997,
+        26246.326999999997,
+        26569.354
+      ],
+      "current_trials": [
+        27772.824,
+        27459.252,
+        27459.252
+      ],
+      "archive_median": 26246.326999999997,
+      "current_median": 27459.252,
+      "reduction": -1212.925000000003,
+      "current_trial_wins": 0
+    },
+    "13_random": {
+      "challenger": "hybrid13_rank_1",
+      "instance": "13_random",
+      "unchanged": false,
+      "archive_trials": [
+        63847.388,
+        63877.322,
+        63592.891
+      ],
+      "current_trials": [
+        63601.74900000001,
+        63601.74900000001,
+        63357.736000000004
+      ],
+      "archive_median": 63847.388,
+      "current_median": 63601.74900000001,
+      "reduction": 245.6389999999883,
+      "current_trial_wins": 3
+    }
+  }
+}
